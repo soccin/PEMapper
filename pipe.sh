@@ -92,8 +92,9 @@ for FASTQ in $SAMPLEDIR/*_R1_???.fastq.gz; do
     QRUN $BWA_THREADS ${TAG}__02__$BASE HOLD ${TAG}__01__$BASE \
         bwa mem -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE%%.fastq*}.sam
     SAMFILES="$SAMFILES $SCRATCH/${BASE%%.fastq*}.sam"
-    JOBS="$JOBS ${TAG}__02__$BASE"
+    JOBS="$JOBS,$JOBID"
 done
 
-echo $SAMFILES
-echo $JOBS
+HOLDIDS=$(echo $JOBS | sed 's/^,//')
+bsub -sync y -now no -hold_jid $HOLDIDS /bin/echo "DONE WITH HOLD"
+
