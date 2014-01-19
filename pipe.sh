@@ -2,9 +2,12 @@
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
 source $SDIR/opt/bin/activate
 export PATH=$SDIR/bin:$PATH
+source $SDIR/bin/sge.sh
 
 ##
 # Process command args
+
+TAG=qPEMAP
 
 COMMAND_LINE=$*
 function usage {
@@ -43,6 +46,7 @@ if [ $SAMPLENAME == "__NotDefined" ]; then
 fi
 
 echo SAMPLENAME=$SAMPLENAME
+TAG=${TAG}_$$_$SAMPLENAME
 
 export SCRATCH=$(pwd)/_scratch
 mkdir -p $SCRATCH
@@ -53,9 +57,12 @@ mkdir -p $SCRATCH
 ADAPTER="AGATCGGAAGAGC"
 
 for FASTQ in $SAMPLEDIR/*_R1_???.fastq.gz; do
-    BASE=$SCRATCH/$(basename $FASTQ)
-    clipAdapters.sh $ADAPTER $FASTQ ${FASTQ/_R1_/_R2_}
+    BASE=$(basename $FASTQ)
+    QRUN 2 ${TAG}__01__$BASE \
+        clipAdapters.sh $ADAPTER $FASTQ ${FASTQ/_R1_/_R2_}
+
     CLIPSEQ1=$SCRATCH/$(basename $FASTQ)___CLIP.fastq
     CLIPSEQ2=$SCRATCH/$(basename ${FASTQ/_R1_/_R2_})___CLIP.fastq
+    #QRUN 3 ${TAG}__02__$BASE HOLD ${TAG}__01__$BASE runBwa.sh $CLIPSEQ1 $CLIPSEQ2
 done
 
