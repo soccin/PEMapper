@@ -15,8 +15,16 @@ QRUN () {
         echo QHOLD=$QHOLD
     fi
 
-    RET=$(qsub $QHOLD -q $QUEUES -pe alloc $ALLOC -N $QTAG -V $SDIR/bin/sgeWrap.sh $*)
+    VMEM=""
+    if [ "$1" == "VMEM" ]; then
+        VMEM="-l virtual_free=$2"
+        shift 2
+        echo VMEM=$VMEM
+    fi
+
+    RET=$(qsub $QHOLD $VMEM -q $QUEUES -pe alloc $ALLOC -N $QTAG -V $SDIR/bin/sgeWrap.sh $*)
     echo "#QRUN RET=" $RET
     echo
+    JOBID=$(echo $RET | perl -ne '/Your job (\d+) /;print $1')
 
 }
