@@ -77,8 +77,8 @@ mkdir -p $SCRATCH
 ADAPTER="AGATCGGAAGAGC"
 BWA_VERSION=$(bwa 2>&1 | fgrep Version | awk '{print $2}')
 
-SAMFILES=""
 JOBS=""
+BAMFILES=""
 for FASTQ in $SAMPLEDIR/*_R1_???.fastq.gz; do
     BASE=$(basename $FASTQ)
     QRUN 2 ${TAG}__01__$BASE \
@@ -91,10 +91,20 @@ for FASTQ in $SAMPLEDIR/*_R1_???.fastq.gz; do
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE%%.fastq*}.sam
     QRUN $BWA_THREADS ${TAG}__02__$BASE HOLD ${TAG}__01__$BASE \
         bwa mem -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE%%.fastq*}.sam
-    SAMFILES="$SAMFILES $SCRATCH/${BASE%%.fastq*}.sam"
+
+    QRUN 1 ${TAG}__03__$BASE HOLD ${TAG}__02__$BASE VMEM 24G \
+        picard AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
+        LB=$SAMPLENAME PU=$SAMPLENAME SM=$SAMPLENAME PL=illumina CN=GCL \
+        I=$SCRATCH/${BASE%%.fastq*}.sam O=$SCRATCH/${BASE%%.fastq*}.bam
+
+    BAMFILES="$BAMFILES $SCRATCH/${BASE%%.fastq*}.bam"
     JOBS="$JOBS,$JOBID"
 done
 
 HOLDIDS=$(echo $JOBS | sed 's/^,//')
-bsub -sync y -now no -hold_jid $HOLDIDS /bin/echo "DONE WITH HOLD"
-
+#bsub -sync y -now no -hold_jid $HOLDIDS /bin/echo "DONE WITH HOLD"
+INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
+mkdir -p out
+QRUN 1 ${TAG}__04__MERGE__${SAMPLENAME} HOLD $HOLDIDS VMEM 24G \
+    picard MergeSamFiles SO=coordinate CREATE_INDEX=true \
+    O=out/${SAMPLENAME}.bam $INPUTS
