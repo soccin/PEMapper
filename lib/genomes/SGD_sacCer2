@@ -1,0 +1,2 @@
+GENOME_FASTQ=/ifs/data/bio/Genomes/S.cerevisiae/sacCer2/SGD/20080628/SGD_sacCer2.fa
+GENOME_BWA=/ifs/data/bio/Genomes/S.cerevisiae/sacCer2/SGD/20080628/BWA_0.7.5a/SGD_sacCer2.fa

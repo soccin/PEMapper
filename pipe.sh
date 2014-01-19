@@ -38,6 +38,19 @@ if [ "$#" -lt "2" ]; then
 fi
 
 GENOME=$1
+
+if [ ! -e $SDIR/lib/genomes/$GENOME ]; then
+    echo
+    echo GENOME=$GENOME Not Defined
+    echo Currently defined genomes
+    ls $SDIR/lib/genomes
+    echo
+
+    exit
+fi
+
+source $SDIR/lib/genomes/$GENOME
+
 SAMPLEDIR=$2
 SAMPLEDIR=$(echo $SAMPLEDIR | sed 's/\/$//')
 
@@ -51,11 +64,13 @@ TAG=${TAG}_$$_$SAMPLENAME
 export SCRATCH=$(pwd)/_scratch
 mkdir -p $SCRATCH
 
+
 ##
 # HiSeq TrueSeq maximal common adapter
 
 ADAPTER="AGATCGGAAGAGC"
 
+SAMFILES=""
 for FASTQ in $SAMPLEDIR/*_R1_???.fastq.gz; do
     BASE=$(basename $FASTQ)
     QRUN 2 ${TAG}__01__$BASE \
@@ -63,6 +78,10 @@ for FASTQ in $SAMPLEDIR/*_R1_???.fastq.gz; do
 
     CLIPSEQ1=$SCRATCH/$(basename $FASTQ)___CLIP.fastq
     CLIPSEQ2=$SCRATCH/$(basename ${FASTQ/_R1_/_R2_})___CLIP.fastq
-    #QRUN 3 ${TAG}__02__$BASE HOLD ${TAG}__01__$BASE runBwa.sh $CLIPSEQ1 $CLIPSEQ2
+    BWA_THREADS=3
+    QRUN $BWA_THREADS ${TAG}__02__$BASE HOLD ${TAG}__01__$BASE \
+        bwa mem -C -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \> $SCRATCH/${BASE%%.fastq*}.sam
+    SAMFILES="$SAMFILES $SCRATCH/${BASE%%.fastq*}.sam"
 done
 
+echo $SAMFILES

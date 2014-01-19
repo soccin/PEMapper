@@ -8,7 +8,14 @@ QRUN () {
     QTAG=$2
     echo QTAG=$QTAG
     shift 2
-    RET=$(qsub -q $QUEUES -pe alloc $ALLOC -N $QTAG -V $SDIR/bin/sgeWrap.sh $*)
+    QHOLD=""
+    if [ "$1" == "HOLD" ]; then
+        QHOLD="-hold_jid $2"
+        shift 2
+        echo QHOLD=$QHOLD
+    fi
+
+    RET=$(qsub $QHOLD -q $QUEUES -pe alloc $ALLOC -N $QTAG -V $SDIR/bin/sgeWrap.sh $*)
     echo "#QRUN RET=" $RET
     echo
 
