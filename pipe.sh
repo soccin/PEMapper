@@ -102,9 +102,15 @@ for FASTQ in $SAMPLEDIR/*_R1_???.fastq.gz; do
 done
 
 HOLDIDS=$(echo $JOBS | sed 's/^,//')
-#bsub -sync y -now no -hold_jid $HOLDIDS /bin/echo "DONE WITH HOLD"
+
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
 mkdir -p out
 QRUN 1 ${TAG}__04__MERGE__${SAMPLENAME} HOLD $HOLDIDS VMEM 24G \
     picard MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=out/${SAMPLENAME}.bam $INPUTS
+
+QRUN 1 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 24G \
+    picard CollectAlignmentSummaryMetrics \
+    I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___AS.txt \
+    R=$GENOME_FASTA
+
