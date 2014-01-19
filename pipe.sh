@@ -44,5 +44,11 @@ fi
 
 echo SAMPLENAME=$SAMPLENAME
 
-#clipAdapters.sh
+export SCRATCH=$(pwd)/_scratch
+
+##
+# HiSeq TrueSeq maximal common adapter
+
+ADAPTER="AGATCGGAAGAGC"
+clipAdapters.sh $ADAPTER $FASTQ
 
