@@ -25,11 +25,12 @@ fi
 
 ##
 # Debug limit
-gzcat $FASTQ1 | head -40000 >$SCRATCH/tmp1.fastq
-gzcat $FASTQ2 | head -40000 >$SCRATCH/tmp2.fastq
-FASTQ1=$SCRATCH/tmp1.fastq
-FASTQ2=$SCRATCH/tmp2.fastq
-md5sum $FASTQ1 $FASTQ2
+# Added $$ to name so no collisions with multiple jobs
+#
+gzcat $FASTQ1 | head -40000 >$SCRATCH/tmp1_$$_.fastq
+gzcat $FASTQ2 | head -40000 >$SCRATCH/tmp2_$$_.fastq
+FASTQ1=$SCRATCH/tmp1_$$_.fastq
+FASTQ2=$SCRATCH/tmp2_$$_.fastq
 
 cutadapt -m $MINLENGTH -a $ADAPTER -e $ERROR \
     --paired-output ${BASE2}.tmp.fastq -o ${BASE1}.tmp.fastq $FASTQ1 $FASTQ2 \
