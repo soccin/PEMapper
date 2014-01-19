@@ -3,6 +3,14 @@ SGE=/home/socci/Work/SGE
 QSYNC=$SGE/qSYNC
 
 QUEUES=nce.q,lau.q,mad.q
+
+##
+# QRUN ALLOC QTAG <HOLD hold_id> <VMEM size>
+#
+# HOLD and VMEM are optional but if you use both then
+# HOLD MUST COME BEFORE VMEM
+#
+
 QRUN () {
     ALLOC=$1
     QTAG=$2
