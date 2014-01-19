@@ -1,10 +1,11 @@
 #!/bin/bash
 
+SNAME=$(basename $0)
+
 # -e .2 (20%) error
 # For len 13 adapter (Maximal HiSeq Default)
 # No. of allowed errors:
 # 0-4 bp: 0; 5-9 bp: 1; 10-13 bp: 2
-
 
 ADAPTER=$1
 FASTQ1=$2
@@ -14,12 +15,12 @@ BASE2=$SCRATCH/$(basename $FASTQ2)
 
 if [ "$MINLENGTH" == "" ]; then
     MINLENGTH=35
-    echo Default MINLENGTH=$MINLENGTH set
+    echo $SNAME Default MINLENGTH=$MINLENGTH set
 fi
 
 if [ "$ERROR" == "" ]; then
     ERROR=0.2
-    echo Default ERROR=$ERROR set
+    echo $SNAME Default ERROR=$ERROR set
 fi
 
 ##
