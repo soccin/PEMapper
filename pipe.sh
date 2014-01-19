@@ -4,6 +4,12 @@ source $SDIR/opt/bin/activate
 export PATH=$SDIR/bin:$PATH
 source $SDIR/bin/sge.sh
 
+SCRIPT_TAG=$(hg tags -R $SDIR | fgrep v_ | head -1 | awk '{print $1}')
+SCRIPT_GREV=$(hg id -i -R $SDIR | tr -d "+")
+SCRIPT_LREV=$(hg id -n -R $SDIR | tr -d "+")
+SCRIPT_VERSION=$SCRIPT_TAG"___"$SCRIPT_LREV":"$SCRIPT_GREV
+PIPENAME="PEMapper"
+
 ##
 # Process command args
 
@@ -69,8 +75,10 @@ mkdir -p $SCRATCH
 # HiSeq TrueSeq maximal common adapter
 
 ADAPTER="AGATCGGAAGAGC"
+BWA_VERSION=$(bwa 2>&1 | fgrep Version | awk '{print $2}')
 
 SAMFILES=""
+JOBS=""
 for FASTQ in $SAMPLEDIR/*_R1_???.fastq.gz; do
     BASE=$(basename $FASTQ)
     QRUN 2 ${TAG}__01__$BASE \
@@ -79,9 +87,13 @@ for FASTQ in $SAMPLEDIR/*_R1_???.fastq.gz; do
     CLIPSEQ1=$SCRATCH/$(basename $FASTQ)___CLIP.fastq
     CLIPSEQ2=$SCRATCH/$(basename ${FASTQ/_R1_/_R2_})___CLIP.fastq
     BWA_THREADS=3
+    echo -e "@PG\tID:bwa\tVN:$BWA_VERSION" > $SCRATCH/${BASE%%.fastq*}.sam
+    echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE%%.fastq*}.sam
     QRUN $BWA_THREADS ${TAG}__02__$BASE HOLD ${TAG}__01__$BASE \
-        bwa mem -C -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \> $SCRATCH/${BASE%%.fastq*}.sam
+        bwa mem -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE%%.fastq*}.sam
     SAMFILES="$SAMFILES $SCRATCH/${BASE%%.fastq*}.sam"
+    JOBS="$JOBS ${TAG}__02__$BASE"
 done
 
 echo $SAMFILES
+echo $JOBS
