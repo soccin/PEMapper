@@ -86,7 +86,7 @@ for FASTQ in $SAMPLEDIR/*_R1_???.fastq.gz; do
 
     CLIPSEQ1=$SCRATCH/$(basename $FASTQ)___CLIP.fastq
     CLIPSEQ2=$SCRATCH/$(basename ${FASTQ/_R1_/_R2_})___CLIP.fastq
-    BWA_THREADS=3
+    BWA_THREADS=6
     echo -e "@PG\tID:bwa\tVN:$BWA_VERSION" > $SCRATCH/${BASE%%.fastq*}.sam
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE%%.fastq*}.sam
     QRUN $BWA_THREADS ${TAG}__02__$BASE HOLD ${TAG}__01__$BASE \
