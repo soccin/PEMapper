@@ -108,7 +108,7 @@ for FASTQ1 in $FASTQFILES; do
         bwa mem -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN 1 ${TAG}__03__$UUID HOLD ${TAG}__02__$UUID VMEM 24G \
-        picard AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
+        picard.local AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
 
@@ -122,11 +122,11 @@ HOLDIDS=$(echo $JOBS | sed 's/^,//')
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
 mkdir -p out
 QRUN 1 ${TAG}__04__MERGE__${SAMPLENAME} HOLD $HOLDIDS VMEM 24G \
-    picard MergeSamFiles SO=coordinate CREATE_INDEX=true \
+    picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=out/${SAMPLENAME}.bam $INPUTS
 
 QRUN 1 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 24G \
-    picard CollectAlignmentSummaryMetrics \
+    picard.local CollectAlignmentSummaryMetrics \
     I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA
 
