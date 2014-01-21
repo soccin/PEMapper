@@ -109,7 +109,7 @@ for FASTQ1 in $FASTQFILES; do
 
     QRUN 1 ${TAG}__03__$UUID HOLD ${TAG}__02__$UUID VMEM 24G \
         picard AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
-        LB=$SAMPLENAME PU=$SAMPLENAME SM=$SAMPLENAME PL=illumina CN=GCL \
+        LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
 
     BAMFILES="$BAMFILES $SCRATCH/${BASE1%%.fastq*}.bam"
