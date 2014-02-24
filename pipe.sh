@@ -18,7 +18,7 @@ TAG=qPEMAP
 COMMAND_LINE=$*
 function usage {
     echo
-    echo "usage: rnaSEQ/pipe.sh [-s SAMPLENAME] GENOME SAMPLEDIR"
+    echo "usage: $PIPENAME/pipe.sh [-s SAMPLENAME] GENOME SAMPLEDIR"
     echo "    -g ListGenomes"
     exit
 }
