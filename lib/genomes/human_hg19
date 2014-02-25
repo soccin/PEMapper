@@ -1,0 +1,2 @@
+GENOME_FASTA=/ifs/data/bio/Genomes/H.sapiens/hg19/human_hg19_FULL.fa
+GENOME_BWA=/ifs/data/bio/Genomes/H.sapiens/hg19/BWA_0.7.5a/human_hg19_FULL.fa
