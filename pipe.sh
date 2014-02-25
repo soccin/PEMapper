@@ -137,7 +137,5 @@ QRUN 1 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VM
     R=$GENOME_FASTA
 
 QRUN 1 ${TAG}__06__HOLD__${SAMPLENAME} HOLD ${TAG}__05__STATS__${SAMPLENAME} \
-    echo "HOLD FOR STATS"
-
-cat O=out/${SAMPLENAME}___AS.txt | egrep -v "(^#|^$)" | ~/bin_centos5/transpose.py >out/${SAMPLENAME}___ASt.txt
+	cat out/${SAMPLENAME}___AS.txt \| egrep -v '"(^#|^$)"' \| /home/socci/bin_centos5/transpose.py \>out/${SAMPLENAME}___ASt.txt
 
