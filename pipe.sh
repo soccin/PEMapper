@@ -130,3 +130,14 @@ QRUN 1 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VM
     I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA
 
+QRUN 1 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 24G \
+    picard.local CollectInsertSizeMetrics \
+    I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___INS.txt \
+	H=out/${SAMPLENAME}___INSHist.pdf \
+    R=$GENOME_FASTA
+
+QRUN 1 ${TAG}__06__HOLD__${SAMPLENAME} HOLD ${TAG}__05__STATS__${SAMPLENAME} \
+    echo "HOLD FOR STATS"
+
+cat O=out/${SAMPLENAME}___AS.txt | egrep -v "(^#|^$)" | ~/bin_centos5/transpose.py >out/${SAMPLENAME}___ASt.txt
+
