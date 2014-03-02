@@ -53,17 +53,21 @@ fi
 GENOME=$1
 shift
 
-if [ ! -e $SDIR/lib/genomes/$GENOME ]; then
-    echo
-    echo GENOME=$GENOME Not Defined
-    echo Currently defined genomes
-    ls -1 $SDIR/lib/genomes
-    echo
-
-    exit
+if [ -e $SDIR/lib/genomes/$GENOME ]; then
+    source $SDIR/lib/genomes/$GENOME
+else
+    if [ -e $GENOME ]; then
+        source $GENOME
+    else
+        echo
+        echo GENOME=$GENOME Not Defined
+        echo "Currently available (builtin) genomes"
+        ls -1 $SDIR/lib/genomes
+        echo
+        exit
+    fi
 fi
 
-source $SDIR/lib/genomes/$GENOME
 
 SAMPLEDIR=$1
 SAMPLEDIR=$(echo $SAMPLEDIR | sed 's/\/$//')
