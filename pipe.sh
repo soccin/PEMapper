@@ -1,6 +1,5 @@
 #!/bin/bash
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
-source $SDIR/opt/bin/activate
 export PATH=$SDIR/bin:$PATH
 source $SDIR/bin/sge.sh
 
