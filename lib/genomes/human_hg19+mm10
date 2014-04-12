@@ -1,0 +1,2 @@
+GENOME_FASTA=/ifs/data/bio/Genomes/H.sapiens/hg19_mm10/hg19_Decoy_mm10.fa
+GENOME_BWA=/ifs/data/bio/Genomes/H.sapiens/hg19_mm10/BWA_0.7.x/hg19_Decoy_mm10.fa
