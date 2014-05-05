@@ -69,11 +69,17 @@ fi
 
 
 SAMPLEDIR=$1
-SAMPLEDIR=$(echo $SAMPLEDIR | sed 's/\/$//')
+SAMPLEDIR=$(echo $SAMPLEDIR | sed 's/\/$//' | sed 's/;.*//')
+
 SAMPLEDIRS=$*
+SAMPLEDIRS=$(echo $SAMPLEDIRS | tr ';' ' ')
 
 if [ $SAMPLENAME == "__NotDefined" ]; then
     SAMPLENAME=$(basename $SAMPLEDIR)
+    if [ "$SAMPLENAME" == "" ]; then
+        echo "Error in sample name processing; Null sample name"
+        exit
+    fi
 fi
 
 echo SAMPLENAME=$SAMPLENAME
