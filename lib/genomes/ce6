@@ -1,0 +1,2 @@
+GENOME_FASTA=/ifs/data/bio/Genomes/C.elegans/ce6/ce6.fa
+GENOME_BWA=/ifs/data/bio/Genomes/C.elegans/ce6/BWA_0.7.5a/ce6.fa

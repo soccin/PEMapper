@@ -1,0 +1,13 @@
+#!/bin/bash
+JAVA=/opt/bin/java
+PICARDDIR=/ifs/data/bio/bin/picard-tools-1.100
+JAR=$1
+shift
+
+if [ "$JAR" == "" ]; then
+    echo "picard"
+    ls ${PICARDDIR}/*jar | sed 's/.*\///' | sed 's/.jar//' | xargs -n 2 | tr ' ' '\t'
+else
+    $JAVA -Xmx23g -Djava.io.tmpdir=/scratch/socci -jar $PICARDDIR/$JAR.jar TMP_DIR=/scratch/socci VALIDATION_STRINGENCY=SILENT $*
+fi
+
