@@ -116,7 +116,7 @@ for FASTQ1 in $FASTQFILES; do
     QRUN $BWA_THREADS ${TAG}__02__$UUID HOLD ${TAG}__01__$UUID \
         bwa mem -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN 1 ${TAG}__03__$UUID HOLD ${TAG}__02__$UUID VMEM 24G \
+    QRUN 2 ${TAG}__03__$UUID HOLD ${TAG}__02__$UUID VMEM 13G \
         picard.local AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
@@ -130,16 +130,16 @@ HOLDIDS=$(echo $JOBS | sed 's/^,//')
 
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
 mkdir -p out
-QRUN 1 ${TAG}__04__MERGE__${SAMPLENAME} HOLD $HOLDIDS VMEM 24G \
+QRUN 2 ${TAG}__04__MERGE__${SAMPLENAME} HOLD $HOLDIDS VMEM 13G \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=out/${SAMPLENAME}.bam $INPUTS
 
-QRUN 1 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 24G \
+QRUN 2 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 13G \
     picard.local CollectAlignmentSummaryMetrics \
     I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA
 
-QRUN 1 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 24G \
+QRUN 2 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 13G \
     picard.local CollectInsertSizeMetrics \
     I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___INS.txt \
 	H=out/${SAMPLENAME}___INSHist.pdf \
