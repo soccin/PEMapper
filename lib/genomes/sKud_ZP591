@@ -1,0 +1,2 @@
+GENOME_FASTA=/ifs/data/bio/Genomes/S.kudriavzevii/ZP591/CLEAN/sacKud.fa
+GENOME_BWA=/ifs/data/bio/Genomes/S.kudriavzevii/ZP591/CLEAN/BWA_0.7.5a/sacKud.fa
