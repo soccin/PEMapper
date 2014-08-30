@@ -1,0 +1,2 @@
+GENOME_FASTA=/ifs/data/bio/Genomes/S.paradoxus/CBS432/CLEAN/sacPar.fa
+GENOME_BWA=/ifs/data/bio/Genomes/S.paradoxus/CBS432/CLEAN/BWA_0.7.5a/sacPar.fa
