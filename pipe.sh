@@ -99,6 +99,13 @@ JOBS=""
 BAMFILES=""
 
 FASTQFILES=$(find $SAMPLEDIRS -name "*_R1_???.fastq.gz")
+echo "FASTQFILES="$FASTQFILES
+
+if [ "$FASTQFILES" == "" ]; then
+    echo "Can not find any FASTQFILES"
+    exit
+fi
+
 for FASTQ1 in $FASTQFILES; do
 
     FASTQ2=${FASTQ1/_R1_/_R2_}
