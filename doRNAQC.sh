@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GENOME_FASTA=/ifs/data/bio/Genomes/M.musculus/mm9/mouse_mm9__All.fa
+GENOME_FASTQ=/ifs/data/bio/Genomes/M.musculus/mm9/mouse_mm9__All.fa
 GENESFILE=/home/socci/Work/SeqAna/Pipelines/db/MM9/refFlat__mm9.txt.gz
 RIBOFILE=/home/socci/Work/SeqAna/Pipelines/db/MM9/ribosomal.interval_file
 
