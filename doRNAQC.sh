@@ -2,7 +2,7 @@
 
 GENOME_FASTQ=/ifs/data/bio/Genomes/M.musculus/mm9/mouse_mm9__All.fa
 GENESFILE=/home/socci/Work/SeqAna/Pipelines/db/MM9/refFlat__mm9.txt.gz
-RIBOFILE=/home/socci/Work/SeqAna/Pipelines/db/MM9/ribosomal.interval_file
+#RIBOFILE=/home/socci/Work/SeqAna/Pipelines/db/MM9/ribosomal.interval_file
 
 #GENOME_FASTQ=/ifs/data/bio/assemblies/H.sapiens/hg19/hg19.fasta
 #GENESFILE=/home/socci/Work/SeqAna/Pipelines/db/HG19/refFlat__hg19.txt.gz
@@ -23,10 +23,11 @@ qsub -pe alloc 3 -l virtual_free=13G -N PIC ~/Work/SGE/qCMD \
 	I=$BAM \
 	O=${BASE}_RNAMetrics.txt
 fi
+	
+#RIBOSOMAL_INTERVALS=$RIBOFILE \
 
 qsub -pe alloc 3 -l virtual_free=13G -N PIC ~/Work/SGE/qCMD \
 	picard_1119 CollectRnaSeqMetrics R=$GENOME_FASTQ \
-	RIBOSOMAL_INTERVALS=$RIBOFILE \
 	REF_FLAT=$GENESFILE \
 	STRAND=SECOND_READ_TRANSCRIPTION_STRAND \
 	I=$BAM \
