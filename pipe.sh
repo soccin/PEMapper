@@ -98,7 +98,7 @@ BWA_VERSION=$(bwa 2>&1 | fgrep Version | awk '{print $2}')
 JOBS=""
 BAMFILES=""
 
-FASTQFILES=$(find $SAMPLEDIRS -name "*_R1_???.fastq.gz")
+FASTQFILES=$(find -L $SAMPLEDIRS -name "*_R1_???.fastq.gz")
 echo "FASTQFILES="$FASTQFILES
 
 if [ "$FASTQFILES" == "" ]; then
