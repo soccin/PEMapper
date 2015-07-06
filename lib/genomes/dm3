@@ -1,0 +1,2 @@
+GENOME_FASTA=/ifs/data/bio/Genomes/D.melanogaster/dm3/dm3.fa
+GENOME_BWA=/ifs/data/bio/Genomes/D.melanogaster/dm3/BWA_0.7.5a/dm3.fa
