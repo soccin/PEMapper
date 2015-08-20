@@ -1,12 +1,12 @@
 #!/bin/bash
 
-GENOME_FASTQ=/ifs/data/bio/Genomes/M.musculus/mm9/mouse_mm9__All.fa
-GENESFILE=/home/socci/Work/SeqAna/Pipelines/db/MM9/refFlat__mm9.txt.gz
+#GENOME_FASTQ=/ifs/data/bio/Genomes/M.musculus/mm9/mouse_mm9__All.fa
+#GENESFILE=/home/socci/Work/SeqAna/Pipelines/db/MM9/refFlat__mm9.txt.gz
 #RIBOFILE=/home/socci/Work/SeqAna/Pipelines/db/MM9/ribosomal.interval_file
 
-#GENOME_FASTQ=/ifs/data/bio/assemblies/H.sapiens/hg19/hg19.fasta
-#GENESFILE=/home/socci/Work/SeqAna/Pipelines/db/HG19/refFlat__hg19.txt.gz
-#RIBOFILE=/home/socci/Work/JonesD2/AminE/RNAEditting/VarScan_20150227/ribosomal.interval_file
+GENOME_FASTQ=/ifs/data/bio/Genomes/H.sapiens/hg19/human_hg19_FULL.fa
+GENESFILE=/home/socci/Work/SeqAna/Pipelines/db/HG19/refFlat__hg19.txt.gz
+RIBOFILE=/home/socci/Work/SeqAna/Pipelines/Mappers/PEMapper/lib/genomes/human_hg19__ribosomal.interval_file
 
 BAM=$1
 BASE=$(basename $BAM | sed 's/.bam//')
@@ -32,3 +32,12 @@ qsub -pe alloc 3 -l virtual_free=13G -N PIC ~/Work/SGE/qCMD \
 	STRAND=SECOND_READ_TRANSCRIPTION_STRAND \
 	I=$BAM \
 	O=${BASE}_RNAMetrics_SRTS.txt
+
+qsub -pe alloc 3 -l virtual_free=13G -N PIC ~/Work/SGE/qCMD \
+	picard_1119 CollectRnaSeqMetrics R=$GENOME_FASTQ \
+	REF_FLAT=$GENESFILE \
+	STRAND=FIRST_READ_TRANSCRIPTION_STRAND \
+	I=$BAM \
+	O=${BASE}_RNAMetrics_FRTS.txt
+
+

@@ -2,7 +2,7 @@ export PATH=/common/sge/bin/lx24-amd64:$PATH
 SGE=/home/socci/Work/SGE
 QSYNC=$SGE/qSYNC
 
-QUEUES=nce.q,lau.q,mad.q
+QUEUES=nce.q,lau.q,lcg.q
 
 ##
 # QRUN ALLOC QTAG <HOLD hold_id> <VMEM size>
