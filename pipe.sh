@@ -1,7 +1,7 @@
 #!/bin/bash
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
 export PATH=$SDIR/bin:$PATH
-source $SDIR/bin/sge.sh
+source $SDIR/bin/lsf.sh
 
 SCRIPT_TAG=$(hg tags -R $SDIR | fgrep v_ | head -1 | awk '{print $1}')
 SCRIPT_GREV=$(hg id -i -R $SDIR | tr -d "+")
@@ -117,12 +117,14 @@ for FASTQ1 in $FASTQFILES; do
     CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
     CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
 
+    exit
+
     BWA_THREADS=6
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
     QRUN $BWA_THREADS ${TAG}__02__$UUID HOLD ${TAG}__01__$UUID \
         bwa mem -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN 2 ${TAG}__03__$UUID HOLD ${TAG}__02__$UUID VMEM 13G \
+    QRUN 2 ${TAG}__03__$UUID HOLD ${TAG}__02__$UUID VMEM 26 \
         picard.local AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
@@ -130,22 +132,24 @@ for FASTQ1 in $FASTQFILES; do
     BAMFILES="$BAMFILES $SCRATCH/${BASE1%%.fastq*}.bam"
     JOBS="$JOBS,$JOBID"
 
+    exit
+
 done
 
 HOLDIDS=$(echo $JOBS | sed 's/^,//')
 
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
 mkdir -p out
-QRUN 2 ${TAG}__04__MERGE__${SAMPLENAME} HOLD $HOLDIDS VMEM 13G \
+QRUN 2 ${TAG}__04__MERGE__${SAMPLENAME} HOLD $HOLDIDS VMEM 26 \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=out/${SAMPLENAME}.bam $INPUTS
 
-QRUN 2 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 13G \
+QRUN 2 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 26 \
     picard.local CollectAlignmentSummaryMetrics \
     I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 13G \
+QRUN 2 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 26 \
     picard.local CollectInsertSizeMetrics \
     I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___INS.txt \
 	H=out/${SAMPLENAME}___INSHist.pdf \
