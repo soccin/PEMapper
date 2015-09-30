@@ -3,10 +3,7 @@ SDIR="$( cd "$( dirname "$0" )" && pwd )"
 export PATH=$SDIR/bin:$PATH
 source $SDIR/bin/lsf.sh
 
-SCRIPT_TAG=$(hg tags -R $SDIR | fgrep v_ | head -1 | awk '{print $1}')
-SCRIPT_GREV=$(hg id -i -R $SDIR | tr -d "+")
-SCRIPT_LREV=$(hg id -n -R $SDIR | tr -d "+")
-SCRIPT_VERSION=$SCRIPT_TAG"___"$SCRIPT_LREV":"$SCRIPT_GREV
+SCRIPT_VERSION=$(git --git-dir=$SDIR/.git --work-tree=$SDIR describe --always --long)
 PIPENAME="PEMapper"
 
 ##
@@ -18,7 +15,9 @@ COMMAND_LINE=$*
 function usage {
     echo
     echo "usage: $PIPENAME/pipe.sh [-s SAMPLENAME] GENOME SAMPLEDIR"
+    echo "version=$SCRIPT_VERSION"
     echo "    -g ListGenomes"
+    echo
     exit
 }
 
