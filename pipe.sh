@@ -21,12 +21,15 @@ function usage {
     exit
 }
 
-BWA_OPTS="-P -M"
+BWA_OPTS=""
 SAMPLENAME="__NotDefined"
-while getopts "s:hg" opt; do
+while getopts "s:hgb:" opt; do
     case $opt in
         s)
             SAMPLENAME=$OPTARG
+            ;;
+        b)
+            BWA_OPTS=$BWA_OPTS" -"$OPTARG
             ;;
         h)
             usage
@@ -48,6 +51,9 @@ shift $((OPTIND - 1))
 if [ "$#" -lt "2" ]; then
     usage
 fi
+
+BWA_OPTS=$(echo $BWA_OPTS | perl -pe "s/^\s+//")
+echo BWA_OPTS="["$BWA_OPTS"]"
 
 GENOME=$1
 shift
@@ -85,8 +91,12 @@ fi
 echo SAMPLENAME=$SAMPLENAME
 TAG=${TAG}_$$_$SAMPLENAME
 
-export SCRATCH=$(pwd)/_scratch
+export SCRATCH=$(pwd)/_scratch/$(uuidgen -t)
 mkdir -p $SCRATCH
+echo SAMPLENAME=$SAMPLENAME >> $SCRATCH/RUNLOG
+echo BWA_OPTS=$BWA_OPTS >> $SCRATCH/RUNLOG
+echo GENOME=$GENOME >> $SCRATCH/RUNLOG
+echo TAG=$TAG >> $SCRATCH/RUNLOG
 
 
 ##
@@ -106,6 +116,7 @@ if [ "$FASTQFILES" == "" ]; then
     exit
 fi
 
+
 for FASTQ1 in $FASTQFILES; do
 
     FASTQ2=${FASTQ1/_R1_/_R2_}
@@ -118,7 +129,7 @@ for FASTQ1 in $FASTQFILES; do
     echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH
     export MINLENGTH=$ONE_HALF_READLENGTH
 
-    QRUN 2 ${TAG}__01__$UUID VMEM 5 \
+    QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
         clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
     CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
     CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
@@ -127,25 +138,23 @@ for FASTQ1 in $FASTQFILES; do
 
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN $BWA_THREADS ${TAG}__02__$UUID HOLD ${TAG}__01__$UUID VMEM 8 \
+    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 8 \
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN 2 ${TAG}__03__$UUID HOLD ${TAG}__02__$UUID VMEM 26 \
+    QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
         picard.local AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
 
     BAMFILES="$BAMFILES $SCRATCH/${BASE1%%.fastq*}.bam"
-    JOBS="$JOBS,$JOBID"
 
 done
 
-HOLDIDS=$(echo $JOBS | sed 's/^,//')
-
 echo
-echo HOLDIDS=$HOLDIDS
 echo BAMFILES=$BAMFILES
-echo BWA_OPTS=$BWA_OPTS
+echo HOLDTAG="${TAG}_MAP_*"
+echo BAMFILES=$BAMFILES >> $SCRATCH/RUNLOG
+echo HOLDTAG="${TAG}_MAP_*" >> $SCRATCH/RUNLOG
 echo
 
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
@@ -154,9 +163,10 @@ BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
 OUTDIR=out___$BWATAG
 mkdir -p $OUTDIR
-QRUN 2 ${TAG}__04__MERGE HOLD $HOLDIDS VMEM 26 \
+QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 26 \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
+
 
 QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 26 \
     picard.local CollectAlignmentSummaryMetrics \
@@ -178,6 +188,6 @@ QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 26 \
     CREATE_INDEX=true \
     R=$GENOME_FASTA
 
-#QRUN 1 ${TAG}__06__POST HOLD ${TAG}__05__STATS \
-#	cat $OUTDIR/${SAMPLENAME}___AS.txt \| egrep -v '"(^#|^$)"' \| /home/socci/bin/transpose.py \>$OUTDIR/${SAMPLENAME}___ASt.txt
+QRUN 1 ${TAG}__06__POST HOLD ${TAG}__05__STATS \
+	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
