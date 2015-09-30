@@ -21,6 +21,7 @@ function usage {
     exit
 }
 
+BWA_OPTS="-P -M"
 SAMPLENAME="__NotDefined"
 while getopts "s:hg" opt; do
     case $opt in
@@ -123,7 +124,6 @@ for FASTQ1 in $FASTQFILES; do
     CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
 
     BWA_THREADS=8
-    BWA_OPTS="-PM"
 
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
@@ -145,33 +145,39 @@ HOLDIDS=$(echo $JOBS | sed 's/^,//')
 echo
 echo HOLDIDS=$HOLDIDS
 echo BAMFILES=$BAMFILES
+echo BWA_OPTS=$BWA_OPTS
 echo
 
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
-mkdir -p out
+
+BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
+
+OUTDIR=out___$BWATAG
+mkdir -p $OUTDIR
 QRUN 2 ${TAG}__04__MERGE HOLD $HOLDIDS VMEM 26 \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
-    O=out/${SAMPLENAME}.bam $INPUTS
+    O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
 QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 26 \
     picard.local CollectAlignmentSummaryMetrics \
-    I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___AS.txt \
-    R=$GENOME_FASTA
+    I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
+    R=$GENOME_FASTA \
+    LEVEL=null LEVEL=SAMPLE
 
 QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 26 \
     picard.local CollectInsertSizeMetrics \
-    I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___INS.txt \
-	H=out/${SAMPLENAME}___INSHist.pdf \
+    I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___INS.txt \
+	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
 
 QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 26 \
     picard.local MarkDuplicates  \
-    I=out/${SAMPLENAME}.bam \
-    O=out/${SAMPLENAME}___MD.bam \
-    M=out/${SAMPLENAME}___MD.txt \
+    I=$OUTDIR/${SAMPLENAME}.bam \
+    O=$OUTDIR/${SAMPLENAME}___MD.bam \
+    M=$OUTDIR/${SAMPLENAME}___MD.txt \
     CREATE_INDEX=true \
     R=$GENOME_FASTA
 
-QRUN 1 ${TAG}__06__POST HOLD ${TAG}__05__STATS \
-	cat out/${SAMPLENAME}___AS.txt \| egrep -v '"(^#|^$)"' \| /home/socci/bin/transpose.py \>out/${SAMPLENAME}___ASt.txt
+#QRUN 1 ${TAG}__06__POST HOLD ${TAG}__05__STATS \
+#	cat $OUTDIR/${SAMPLENAME}___AS.txt \| egrep -v '"(^#|^$)"' \| /home/socci/bin/transpose.py \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
