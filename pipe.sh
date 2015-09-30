@@ -149,21 +149,29 @@ echo
 
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
 mkdir -p out
-QRUN 2 ${TAG}__04__MERGE__${SAMPLENAME} HOLD $HOLDIDS VMEM 26 \
+QRUN 2 ${TAG}__04__MERGE HOLD $HOLDIDS VMEM 26 \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=out/${SAMPLENAME}.bam $INPUTS
 
-QRUN 2 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 26 \
+QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 26 \
     picard.local CollectAlignmentSummaryMetrics \
     I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__STATS__${SAMPLENAME} HOLD ${TAG}__04__MERGE__${SAMPLENAME} VMEM 26 \
+QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 26 \
     picard.local CollectInsertSizeMetrics \
     I=out/${SAMPLENAME}.bam O=out/${SAMPLENAME}___INS.txt \
 	H=out/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
 
-QRUN 1 ${TAG}__06__HOLD__${SAMPLENAME} HOLD ${TAG}__05__STATS__${SAMPLENAME} \
+QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 26 \
+    picard.local MarkDuplicates  \
+    I=out/${SAMPLENAME}.bam \
+    O=out/${SAMPLENAME}___MD.bam \
+    M=out/${SAMPLENAME}___MD.txt \
+    CREATE_INDEX=true \
+    R=$GENOME_FASTA
+
+QRUN 1 ${TAG}__06__POST HOLD ${TAG}__05__STATS \
 	cat out/${SAMPLENAME}___AS.txt \| egrep -v '"(^#|^$)"' \| /home/socci/bin/transpose.py \>out/${SAMPLENAME}___ASt.txt
 
