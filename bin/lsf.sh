@@ -28,7 +28,7 @@ QRUN () {
         echo VMEM=$VMEM
     fi
 
-    RET=$(bsub $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*)
+    RET=$(bsub -We 59 $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*)
     echo RET=bsub $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*
     echo "#QRUN RET=" $RET
     echo
