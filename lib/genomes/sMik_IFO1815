@@ -1,2 +1,4 @@
+echo "NEED TO FIX PATHS"
+exit
 GENOME_FASTA=/ifs/data/bio/Genomes/S.mikatae/IFO1815/CLEAN/sacMik.fa
 GENOME_BWA=/ifs/data/bio/Genomes/S.mikatae/IFO1815/CLEAN/BWA_0.7.5a/sacMik.fa
