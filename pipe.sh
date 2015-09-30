@@ -111,7 +111,13 @@ for FASTQ1 in $FASTQFILES; do
     BASE1=$(echo $FASTQ1 | tr '/' '_')
     BASE2=$(echo $FASTQ2 | tr '/' '_')
     UUID=$(uuidgen)
-    QRUN 2 ${TAG}__01__$UUID \
+
+    # Get readlength
+    ONE_HALF_READLENGTH=$(zcat $FASTQ1 | head -40 | xargs -n 4 | awk '{print $2}' | wc | awk '{printf("%d\n",($3/10-1)/2)}')
+    echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH
+    export MINLENGTH=$ONE_HALF_READLENGTH
+
+    QRUN 2 ${TAG}__01__$UUID VMEM 5 \
         clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
     CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
     CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
