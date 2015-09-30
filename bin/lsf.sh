@@ -22,12 +22,12 @@ QRUN () {
 
     VMEM=""
     if [ "$1" == "VMEM" ]; then
-        VMEM="-R "rusage[mem=$2]"
+        VMEM='-R "rusage[mem=$2]"'
         shift 2
         echo VMEM=$VMEM
     fi
 
-    RET=$(bsub $QHOLD $VMEM -n $ALLOC -J $QTAG $*)
+    echo RET=$(bsub $QHOLD $VMEM -n $ALLOC -J $QTAG $*)
     echo "#QRUN RET=" $RET
     echo
     JOBID=$(echo $RET | perl -ne '/Job <(\d+)> /;print $1')
