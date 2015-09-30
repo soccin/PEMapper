@@ -122,10 +122,9 @@ for FASTQ1 in $FASTQFILES; do
     CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
     CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
 
-    exit
-
     BWA_THREADS=6
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
+
     QRUN $BWA_THREADS ${TAG}__02__$UUID HOLD ${TAG}__01__$UUID \
         bwa mem -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
