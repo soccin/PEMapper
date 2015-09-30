@@ -19,7 +19,7 @@ if [ "$MINLENGTH" == "" ]; then
 fi
 
 if [ "$ERROR" == "" ]; then
-    ERROR=0.2
+    ERROR=0.1
     echo $SNAME Default ERROR=$ERROR set
 fi
 
@@ -32,11 +32,11 @@ fi
 # FASTQ1=$SCRATCH/tmp1_$$_.fastq
 # FASTQ2=$SCRATCH/tmp2_$$_.fastq
 
-cutadapt -m $MINLENGTH -a $ADAPTER -e $ERROR \
+cutadapt -O 10 -q 3 -m $MINLENGTH -a $ADAPTER -e $ERROR \
     --paired-output ${BASE2}.tmp.fastq -o ${BASE1}.tmp.fastq $FASTQ1 $FASTQ2 \
     > ${BASE1}.log
 
-cutadapt -m $MINLENGTH -a $ADAPTER -e $ERROR \
+cutadapt -O 10 -q 3 -m $MINLENGTH -a $ADAPTER -e $ERROR \
     --paired-output ${BASE1}___CLIP.fastq -o ${BASE2}___CLIP.fastq ${BASE2}.tmp.fastq ${BASE1}.tmp.fastq \
     > ${BASE2}.log
 
