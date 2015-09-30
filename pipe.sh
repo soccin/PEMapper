@@ -122,11 +122,13 @@ for FASTQ1 in $FASTQFILES; do
     CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
     CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
 
-    BWA_THREADS=6
+    BWA_THREADS=8
+    BWA_OPTS="-PM"
+
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN $BWA_THREADS ${TAG}__02__$UUID HOLD ${TAG}__01__$UUID VMEM 8 \
-        bwa mem -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
+        bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN 2 ${TAG}__03__$UUID HOLD ${TAG}__02__$UUID VMEM 26 \
         picard.local AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
@@ -136,11 +138,14 @@ for FASTQ1 in $FASTQFILES; do
     BAMFILES="$BAMFILES $SCRATCH/${BASE1%%.fastq*}.bam"
     JOBS="$JOBS,$JOBID"
 
-    exit
-
 done
 
 HOLDIDS=$(echo $JOBS | sed 's/^,//')
+
+echo
+echo HOLDIDS=$HOLDIDS
+echo BAMFILES=$BAMFILES
+echo
 
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
 mkdir -p out
