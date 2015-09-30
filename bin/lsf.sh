@@ -9,6 +9,7 @@ QSYNC=#
 #
 
 QRUN () {
+
     ALLOC=$1
     QTAG=$2
     echo QTAG=$QTAG
@@ -27,7 +28,8 @@ QRUN () {
         echo VMEM=$VMEM
     fi
 
-    echo RET=$(bsub $QHOLD $VMEM -n $ALLOC -J $QTAG $*)
+    RET=$(bsub $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*)
+    echo RET=bsub $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*
     echo "#QRUN RET=" $RET
     echo
     JOBID=$(echo $RET | perl -ne '/Job <(\d+)> /;print $1')
