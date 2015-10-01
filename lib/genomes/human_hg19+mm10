@@ -1,4 +1,2 @@
-echo "NEED TO FIX PATHS"
-exit
-GENOME_FASTA=/ifs/data/bio/Genomes/H.sapiens/hg19_mm10/hg19_Decoy_mm10.fa
-GENOME_BWA=/ifs/data/bio/Genomes/H.sapiens/hg19_mm10/BWA_0.7.x/hg19_Decoy_mm10.fa
+GENOME_FASTA=/ifs/depot/assemblies/hybrids/H.sapiens_M.musculus/hg19_mm10/index/bwa/0.7.8/hg19_mm10.fasta
+GENOME_BWA=/ifs/depot/assemblies/hybrids/H.sapiens_M.musculus/hg19_mm10/index/bwa/0.7.8/hg19_mm10.fasta
