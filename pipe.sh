@@ -125,8 +125,9 @@ for FASTQ1 in $FASTQFILES; do
     UUID=$(uuidgen)
 
     # Get readlength
-    ONE_HALF_READLENGTH=$(zcat $FASTQ1 | head -40 | xargs -n 4 | awk '{print $2}' | wc | awk '{printf("%d\n",($3/10-1)/2)}')
+    ONE_HALF_READLENGTH=$(zcat $FASTQ1 | ./PEMapper/bin/getReadLength.py | awk '{printf("%d\n",$1/2)}')
     echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH
+    echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH >> $SCRATCH/RUNLOG
     export MINLENGTH=$ONE_HALF_READLENGTH
 
     QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
