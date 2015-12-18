@@ -108,7 +108,7 @@ BWA_VERSION=$(bwa 2>&1 | fgrep Version | awk '{print $2}')
 JOBS=""
 BAMFILES=""
 
-FASTQFILES=$(find -L $SAMPLEDIRS -name "*_R1_???.fastq.gz")
+FASTQFILES=$(find -L $SAMPLEDIRS -name "*[_.]R1*.fastq.gz")
 echo "FASTQFILES="$FASTQFILES
 
 if [ "$FASTQFILES" == "" ]; then
@@ -119,7 +119,22 @@ fi
 
 for FASTQ1 in $FASTQFILES; do
 
-    FASTQ2=${FASTQ1/_R1_/_R2_}
+	case "$FASTQ1" in
+		*_R1_*)
+		FASTQ2=${FASTQ1/_R1_/_R2_}
+		;;
+
+		*.R1.*)
+		FASTQ2=${FASTQ1/.R1./.R2.}
+		;;
+
+		*)
+		echo
+		echo "FATAL ERROR; INVALID FASTQ1 filename =" $FASTQ1
+		exit
+
+	esac
+
     BASE1=$(echo $FASTQ1 | tr '/' '_')
     BASE2=$(echo $FASTQ2 | tr '/' '_')
     UUID=$(uuidgen)
