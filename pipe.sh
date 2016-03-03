@@ -73,7 +73,6 @@ else
     fi
 fi
 
-
 SAMPLEDIR=$1
 SAMPLEDIR=$(echo $SAMPLEDIR | sed 's/\/$//' | sed 's/;.*//')
 
