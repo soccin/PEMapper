@@ -1,0 +1,2 @@
+GENOME_FASTA=/ifs/work/socci/Depot/Genomes/E.coli/K12/MG1655/eColi__MG1655.fa
+GENOME_BWA=/ifs/work/socci/Depot/Genomes/E.coli/K12/MG1655/index/bwa/0.7.12/eColi__MG1655.fa
