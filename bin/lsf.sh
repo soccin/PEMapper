@@ -2,10 +2,13 @@ QSYNC=#
 
 
 ##
-# QRUN ALLOC QTAG <HOLD hold_id> <VMEM size>
+# QRUN ALLOC QTAG <HOLD hold_id> <VMEM size> LONG
 #
-# HOLD and VMEM are optional but if you use both then
-# HOLD MUST COME BEFORE VMEM
+# HOLD, VMEM and LONG are optional but if you more than one
+# they must be in this order
+#   HOLD
+#   VMEM
+#   LONG
 #
 
 QRUN () {
@@ -26,6 +29,13 @@ QRUN () {
         VMEM='-R "rusage[mem='$2']"'
         shift 2
         echo VMEM=$VMEM
+    fi
+
+    TIME="-We 59"
+    if [ "$1" == "LONG" ]; then
+        TIME=""
+        shift 1
+        echo LONG Job
     fi
 
     RET=$(bsub -We 59 $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*)
