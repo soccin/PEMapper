@@ -1,4 +1,4 @@
-echo "NEED TO FIX PATHS"
-exit
-GENOME_FASTA=/ifs/data/bio/Genomes/S.cerevisiae/sacCer2/SGD/20080628/SGD_sacCer2.fa
-GENOME_BWA=/ifs/data/bio/Genomes/S.cerevisiae/sacCer2/SGD/20080628/BWA_0.7.5a/SGD_sacCer2.fa
+# MSK Chr convention (chr01, chr02, ...)
+GENOME_DIR=/ifs/res/socci/LUX/ifs/data/bio/Genomes/S.cerevisiae/sacCer2/SGD/20080628/BWA_0.7.5a
+GENOME_FASTA=$GENOME_DIR/SGD_sacCer2.fa
+GENOME_BWA=$GENOME_DIR/SGD_sacCer2.fa
