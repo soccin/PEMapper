@@ -138,11 +138,16 @@ for FASTQ1 in $FASTQFILES; do
     BASE2=$(echo $FASTQ2 | tr '/' '_')
     UUID=$(uuidgen)
 
-    # Get readlength
-    ONE_HALF_READLENGTH=$(zcat $FASTQ1 | ./PEMapper/bin/getReadLength.py | awk '{printf("%d\n",$1/2)}')
-    echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH
-    echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH >> $SCRATCH/RUNLOG
-    export MINLENGTH=$ONE_HALF_READLENGTH
+    # if MINLENGTH not set in ENV then set to 1/2 read length
+    if [ "$MINLENGTH" == "" ]; then
+
+        # Get readlength
+        ONE_HALF_READLENGTH=$(zcat $FASTQ1 | $SDIR/bin/getReadLength.py | awk '{printf("%d\n",$1/2)}')
+        echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH
+        echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH >> $SCRATCH/RUNLOG
+        export MINLENGTH=$ONE_HALF_READLENGTH
+
+    fi
 
     QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
         clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
