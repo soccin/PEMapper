@@ -4,12 +4,12 @@ export PATH=$SDIR/bin:$PATH
 source $SDIR/bin/lsf.sh
 
 SCRIPT_VERSION=$(git --git-dir=$SDIR/.git --work-tree=$SDIR describe --always --long)
-PIPENAME="PEMapper"
+PIPENAME="SEMapper"
 
 ##
 # Process command args
 
-TAG=qPEMAP
+TAG=qSEMAP
 
 COMMAND_LINE=$*
 function usage {
@@ -118,24 +118,7 @@ fi
 
 for FASTQ1 in $FASTQFILES; do
 
-	case "$FASTQ1" in
-		*_R1_*)
-		FASTQ2=${FASTQ1/_R1_/_R2_}
-		;;
-
-		*.R1.*)
-		FASTQ2=${FASTQ1/.R1./.R2.}
-		;;
-
-		*)
-		echo
-		echo "FATAL ERROR; INVALID FASTQ1 filename =" $FASTQ1
-		exit
-
-	esac
-
     BASE1=$(echo $FASTQ1 | tr '/' '_')
-    BASE2=$(echo $FASTQ2 | tr '/' '_')
     UUID=$(uuidgen)
 
     # if MINLENGTH not set in ENV then set to 1/2 read length
@@ -150,16 +133,15 @@ for FASTQ1 in $FASTQFILES; do
     fi
 
     QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
-        clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
+        clipAdapters.sh $ADAPTER $FASTQ1
     CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
-    CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
 
     BWA_THREADS=8
 
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 8 \
-        bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
+        bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
         picard.local AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
