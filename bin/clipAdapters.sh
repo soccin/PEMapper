@@ -13,14 +13,27 @@ FASTQ2=$3
 BASE1=$SCRATCH/$(echo $FASTQ1 | tr '/' '_')
 BASE2=$SCRATCH/$(echo $FASTQ2 | tr '/' '_')
 
+FASTX=/opt/common/CentOS_6/fastx_toolkit/fastx_toolkit-0.0.13
+
 if [ "$MINLENGTH" == "" ]; then
     MINLENGTH=35
     echo $SNAME Default MINLENGTH=$MINLENGTH set
+else
+    echo $SNAME Explicit MINLENGTH=$MINLENGTH set
 fi
 
 if [ "$ERROR" == "" ]; then
     ERROR=0.1
     echo $SNAME Default ERROR=$ERROR set
+fi
+
+if [ "$TRIM_READS" != "" ]; then
+    echo $SNAME "TRIM_READS =["$TRIM_READS"]"
+    TAG=$(uuidgen)
+    gzcat $FASTQ1 | $FASTX/fastx_trimmer -Q 33 -l $TRIM_READS -z >$SCRATCH/trim1_${TAG}_.fastq.gz
+    gzcat $FASTQ2 | $FASTX/fastx_trimmer -Q 33 -l $TRIM_READS -z >$SCRATCH/trim2_${TAG}_.fastq.gz
+    FASTQ1=$SCRATCH/trim1_${TAG}_.fastq.gz
+    FASTQ2=$SCRATCH/trim2_${TAG}_.fastq.gz
 fi
 
 ##

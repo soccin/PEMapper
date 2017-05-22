@@ -23,7 +23,7 @@ function usage {
 
 BWA_OPTS=""
 SAMPLENAME="__NotDefined"
-while getopts "s:hgb:" opt; do
+while getopts "s:hgb:t:" opt; do
     case $opt in
         s)
             SAMPLENAME=$OPTARG
@@ -40,6 +40,10 @@ while getopts "s:hgb:" opt; do
             ls -1 $SDIR/lib/genomes
             echo
             exit
+            ;;
+        t)
+            TRIM_READS=$OPTARG
+            export TRIM_READS
             ;;
         \?)
             usage
