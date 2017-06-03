@@ -1,0 +1,2 @@
+GENOME_FASTA=/ifs/depot/assemblies/M.musculus/GRCm38/GRCm38.fasta
+GENOME_BWA=/ifs/depot/assemblies/M.musculus/GRCm38/index/bwa/0.7.12/GRCm38.fasta
