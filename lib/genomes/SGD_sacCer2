@@ -1,4 +1,4 @@
 # MSK Chr convention (chr01, chr02, ...)
-GENOME_DIR=/ifs/res/socci/LUX/ifs/data/bio/Genomes/S.cerevisiae/sacCer2/SGD/20080628/BWA_0.7.5a
+GENOME_DIR=/ifs/work/socci/Depot/Genomes/S.cerevisiae/sacCer2/SGD/20080628/BWA_0.7.5a
 GENOME_FASTA=$GENOME_DIR/SGD_sacCer2.fa
 GENOME_BWA=$GENOME_DIR/SGD_sacCer2.fa
