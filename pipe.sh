@@ -149,7 +149,7 @@ for FASTQ1 in $FASTQFILES; do
 
     fi
 
-    QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
+    QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 LONG \
         clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
     CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
     CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
@@ -158,10 +158,10 @@ for FASTQ1 in $FASTQFILES; do
 
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 8 \
+    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 8 LONG \
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
+    QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 LONG \
         picard.local AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
