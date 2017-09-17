@@ -162,7 +162,8 @@ for FASTQ1 in $FASTQFILES; do
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 LONG \
-        picard.local AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
+        picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 \
+        CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
 
