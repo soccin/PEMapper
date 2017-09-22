@@ -1,0 +1,2 @@
+GENOME_FASTA=/ifs/depot/assemblies/H.sapiens/b37/index/bwa/0.7.12/b37.fasta
+GENOME_BWA=/ifs/depot/assemblies/H.sapiens/b37/index/bwa/0.7.12/b37.fasta

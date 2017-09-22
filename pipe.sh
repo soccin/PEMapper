@@ -138,11 +138,16 @@ for FASTQ1 in $FASTQFILES; do
     BASE2=$(echo $FASTQ2 | tr '/' '_')
     UUID=$(uuidgen)
 
-    # Get readlength
-    ONE_HALF_READLENGTH=$(zcat $FASTQ1 | ./PEMapper/bin/getReadLength.py | awk '{printf("%d\n",$1/2)}')
-    echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH
-    echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH >> $SCRATCH/RUNLOG
-    export MINLENGTH=$ONE_HALF_READLENGTH
+    # if MINLENGTH not set in ENV then set to 1/2 read length
+    if [ "$MINLENGTH" == "" ]; then
+
+        # Get readlength
+        ONE_HALF_READLENGTH=$(zcat $FASTQ1 | $SDIR/bin/getReadLength.py | awk '{printf("%d\n",$1/2)}')
+        echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH
+        echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH >> $SCRATCH/RUNLOG
+        export MINLENGTH=$ONE_HALF_READLENGTH
+
+    fi
 
     QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
         clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
@@ -178,24 +183,24 @@ BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
 OUTDIR=out___$BWATAG
 mkdir -p $OUTDIR
-QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 26 \
+QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 26 \
+QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA \
     LEVEL=null LEVEL=SAMPLE
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 26 \
+QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local CollectInsertSizeMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___INS.txt \
 	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 26 \
+QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local MarkDuplicates  \
     I=$OUTDIR/${SAMPLENAME}.bam \
     O=$OUTDIR/${SAMPLENAME}___MD.bam \

@@ -32,11 +32,7 @@ fi
 # FASTQ1=$SCRATCH/tmp1_$$_.fastq
 # FASTQ2=$SCRATCH/tmp2_$$_.fastq
 
-cutadapt -O 10 -q 3 -m $MINLENGTH -a $ADAPTER -e $ERROR \
-    --paired-output ${BASE2}.tmp.fastq -o ${BASE1}.tmp.fastq $FASTQ1 $FASTQ2 \
-    > ${BASE1}.log
-
-cutadapt -O 10 -q 3 -m $MINLENGTH -a $ADAPTER -e $ERROR \
-    --paired-output ${BASE1}___CLIP.fastq -o ${BASE2}___CLIP.fastq ${BASE2}.tmp.fastq ${BASE1}.tmp.fastq \
-    > ${BASE2}.log
-
+cutadapt -O 10 -q 3 -m $MINLENGTH -e $ERROR \
+    -a $ADAPTER -A $ADAPTER \
+    -o ${BASE1}___CLIP.fastq -p ${BASE2}___CLIP.fastq \
+    $FASTQ1 $FASTQ2
