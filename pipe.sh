@@ -201,6 +201,13 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     R=$GENOME_FASTA
 
 QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+    picard.local CollectGcBiasMetrics \
+    I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___GCB.txt \
+    CHART=$OUTDIR/${SAMPLENAME}___GCB.pdf \
+    S=$OUTDIR/${SAMPLENAME}___GCBsummary.txt \
+    R=$GENOME_FASTA
+
+QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local CollectWgsMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
     R=$GENOME_FASTA
