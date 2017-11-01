@@ -200,6 +200,18 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
 	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
 
+QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+    picard.local CollectGcBiasMetrics \
+    I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___GCB.txt \
+    CHART=$OUTDIR/${SAMPLENAME}___GCB.pdf \
+    S=$OUTDIR/${SAMPLENAME}___GCBsummary.txt \
+    R=$GENOME_FASTA
+
+QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+    picard.local CollectWgsMetrics \
+    I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
+    R=$GENOME_FASTA
+
 QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local MarkDuplicates  \
     I=$OUTDIR/${SAMPLENAME}.bam \
@@ -210,4 +222,7 @@ QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
 
 QRUN 1 ${TAG}__06__POST HOLD ${TAG}__05__STATS \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
+
+QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__MD \
+    rm -rf $SCRATCH
 
