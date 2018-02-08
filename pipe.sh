@@ -220,13 +220,20 @@ QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     CREATE_INDEX=true \
     R=$GENOME_FASTA
 
-DBSNP=/ifs/depot/resources/gatk/bundle/2.8/b37/dbsnp_138.b37.vcf
-QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picardV2  CollectOxoGMetrics \
-    R=$GENOME_FASTA \
-    DB_SNP=$DBSNP \
-    I=$OUTDIR/${SAMPLENAME}.bam \
-    O=$OUTDIR/${SAMPLENAME}___OxoG.txt
+if [ "$DBSNP" != "" ]; then
+    QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+        picardV2  CollectOxoGMetrics \
+        R=$GENOME_FASTA \
+        DB_SNP=$DBSNP \
+        I=$OUTDIR/${SAMPLENAME}.bam \
+        O=$OUTDIR/${SAMPLENAME}___OxoG.txt
+else
+    QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+        picardV2  CollectOxoGMetrics \
+        R=$GENOME_FASTA \
+        I=$OUTDIR/${SAMPLENAME}.bam \
+        O=$OUTDIR/${SAMPLENAME}___OxoG.txt
+fi
 
 QRUN 1 ${TAG}__06__POST HOLD ${TAG}__05__STATS \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
