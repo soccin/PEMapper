@@ -23,11 +23,13 @@ function usage {
 
 BWA_OPTS=""
 SAMPLENAME="__NotDefined"
-while getopts "s:hgb:" opt; do
+while getopts "s:hgb:t:" opt; do
     case $opt in
         s)
             SAMPLENAME=$OPTARG
             ;;
+        t)  TAG=$OPTARG
+	    ;;
         b)
             BWA_OPTS=$BWA_OPTS" -"$OPTARG
             ;;
@@ -186,7 +188,6 @@ mkdir -p $OUTDIR
 QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
-
 
 QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local CollectAlignmentSummaryMetrics \
