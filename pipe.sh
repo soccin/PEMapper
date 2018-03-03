@@ -29,7 +29,7 @@ while getopts "s:hgb:t:" opt; do
             SAMPLENAME=$OPTARG
             ;;
         t)  TAG=$OPTARG
-	    ;;
+	        ;;
         b)
             BWA_OPTS=$BWA_OPTS" -"$OPTARG
             ;;
@@ -160,8 +160,21 @@ for FASTQ1 in $FASTQFILES; do
 
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 32 \
-        bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
+    QRUN $BWA_THREADS ${TAG}_MAP_02a__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 32 \
+        bwa aln $BWA_OPTS -q 10 -t $BWA_THREADS $GENOME_$BWA \
+            $CLIPSEQ1 \> $SCRATCH/${BASE1%%.fastq*}.1.aln
+
+    QRUN $BWA_THREADS ${TAG}_MAP_02a__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 32 \
+        bwa aln $BWA_OPTS -q 10 -t $BWA_THREADS $GENOME_$BWA \
+            $CLIPSEQ2 \> $SCRATCH/${BASE1%%.fastq*}.2.aln
+
+    QRUN 2 ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_02a__$UUID VMEM 32 \
+        bwa sampe $GENOME_$BWA \
+            $SCRATCH/${BASE1%%.fastq*}.1.aln $SCRATCH/${BASE1%%.fastq*}.2.aln \
+            $CLIPSEQ1 $CLIPSEQ2 \>\> $SCRATCH/${BASE1%%.fastq*}.sam
+
+        # bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA \
+        #     $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
         picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
