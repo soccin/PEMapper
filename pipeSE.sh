@@ -152,9 +152,8 @@ for FASTQ1 in $FASTQFILES; do
     fi
 
     QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
-        clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
+        clipAdaptersSE.sh $ADAPTER $FASTQ1
     CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
-    CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
 
     BWA_THREADS=8
 
@@ -164,21 +163,16 @@ for FASTQ1 in $FASTQFILES; do
         bwa aln $BWA_OPTS -q 10 -t $BWA_THREADS $GENOME_BWA \
             $CLIPSEQ1 \> $SCRATCH/${BASE1%%.fastq*}.1.aln
 
-    QRUN $BWA_THREADS ${TAG}_MAP_02a__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 32 \
-        bwa aln $BWA_OPTS -q 10 -t $BWA_THREADS $GENOME_BWA \
-            $CLIPSEQ2 \> $SCRATCH/${BASE1%%.fastq*}.2.aln
-
     # Delay start of next job to try to deal with file system
     # latency. Also compute MD5 to see if there is an issue
 
     QRUN 1 ${TAG}_MAP_02b__$UUID HOLD ${TAG}_MAP_02a__$UUID VMEM 2 \
-        md5sum $CLIPSEQ1 $SCRATCH/${BASE1%%.fastq*}.1.aln \
-            $CLIPSEQ2 $SCRATCH/${BASE1%%.fastq*}.2.aln \>$SCRATCH/__MD5_02b
+        md5sum $CLIPSEQ1 $SCRATCH/${BASE1%%.fastq*}.1.aln \>$SCRATCH/__MD5_02b
 
     QRUN 2 ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_02b__$UUID VMEM 32 \
-        bwa sampe $GENOME_BWA \
-            $SCRATCH/${BASE1%%.fastq*}.1.aln $SCRATCH/${BASE1%%.fastq*}.2.aln \
-            $CLIPSEQ1 $CLIPSEQ2 \>\> $SCRATCH/${BASE1%%.fastq*}.sam
+        bwa samse $GENOME_BWA \
+            $SCRATCH/${BASE1%%.fastq*}.1.aln \
+            $CLIPSEQ1 \>\> $SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
         picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
