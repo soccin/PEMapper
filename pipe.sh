@@ -168,8 +168,15 @@ for FASTQ1 in $FASTQFILES; do
         bwa aln $BWA_OPTS -q 10 -t $BWA_THREADS $GENOME_BWA \
             $CLIPSEQ2 \> $SCRATCH/${BASE1%%.fastq*}.2.aln
 
-    QRUN 2 ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_02a__$UUID VMEM 32 \
-        bwa sampe $GENOME_$BWA \
+    # Delay start of next job to try to deal with file system
+    # latency. Also compute MD5 to see if there is an issue
+
+    QRUN 1 ${TAG}_MAP_02b__$UUID HOLD ${TAG}_MAP_02a__$UUID VMEM 2 \
+        md5sum $CLIPSEQ1 $SCRATCH/${BASE1%%.fastq*}.1.aln \
+            $CLIPSEQ2 $SCRATCH/${BASE1%%.fastq*}.2.aln \>$SCRATCH/__MD5_02b
+
+    QRUN 2 ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_02b__$UUID VMEM 32 \
+        bwa sampe $GENOME_BWA \
             $SCRATCH/${BASE1%%.fastq*}.1.aln $SCRATCH/${BASE1%%.fastq*}.2.aln \
             $CLIPSEQ1 $CLIPSEQ2 \>\> $SCRATCH/${BASE1%%.fastq*}.sam
 
