@@ -256,6 +256,6 @@ fi
 QRUN 1 ${TAG}__06__POST HOLD ${TAG}__05__STATS \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
-# QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__MD \
-#     rm -rf $SCRATCH
+QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__MD \
+     rm -rf $SCRATCH
 
