@@ -132,16 +132,18 @@ for FASTQ1 in $FASTQFILES; do
 
     fi
 
-    QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
-        clipAdapters.sh $ADAPTER $FASTQ1
-    CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
+    #QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
+    #    clipAdapters.sh $ADAPTER $FASTQ1
+    #CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
 
     BWA_THREADS=30
 
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 64 \
-        bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
+    #QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 128 \
+    #    bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
+    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID VMEM 128 \
+        bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $FASTQ1 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
         picard.local AddOrReplaceReadGroups CREATE_INDEX=true SO=coordinate \
