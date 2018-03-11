@@ -171,26 +171,11 @@ QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
-
 QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA \
     LEVEL=null LEVEL=SAMPLE
-
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picard.local CollectInsertSizeMetrics \
-    I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___INS.txt \
-	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
-    R=$GENOME_FASTA
-
-QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picard.local MarkDuplicates  \
-    I=$OUTDIR/${SAMPLENAME}.bam \
-    O=$OUTDIR/${SAMPLENAME}___MD.bam \
-    M=$OUTDIR/${SAMPLENAME}___MD.txt \
-    CREATE_INDEX=true \
-    R=$GENOME_FASTA
 
 QRUN 1 ${TAG}__06__POST HOLD ${TAG}__05__STATS \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
