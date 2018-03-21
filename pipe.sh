@@ -161,8 +161,8 @@ for FASTQ1 in $FASTQFILES; do
     QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 8 \
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
-        picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
+    QRUN 4 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 70 \
+        picard.local.bm AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
 
@@ -183,37 +183,37 @@ BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
 OUTDIR=out___$BWATAG
 mkdir -p $OUTDIR
-QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
-    picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
+QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 70 LONG \
+    picard.local.bm MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picard.local CollectAlignmentSummaryMetrics \
+QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+    picard.local.bm CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA \
     LEVEL=null LEVEL=SAMPLE
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picard.local CollectInsertSizeMetrics \
+QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+    picard.local.bm CollectInsertSizeMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___INS.txt \
 	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picard.local CollectGcBiasMetrics \
+QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+    picardV2.bm CollectGcBiasMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___GCB.txt \
     CHART=$OUTDIR/${SAMPLENAME}___GCB.pdf \
     S=$OUTDIR/${SAMPLENAME}___GCBsummary.txt \
     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picard.local CollectWgsMetrics \
+QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+    picardV2.bm CollectWgsMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picard.local MarkDuplicates  \
+QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+    picard.local.bm MarkDuplicates  \
     I=$OUTDIR/${SAMPLENAME}.bam \
     O=$OUTDIR/${SAMPLENAME}___MD.bam \
     M=$OUTDIR/${SAMPLENAME}___MD.txt \
@@ -221,15 +221,15 @@ QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     R=$GENOME_FASTA
 
 if [ "$DBSNP" != "" ]; then
-    QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-        picardV2  CollectOxoGMetrics \
+    QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+        picardV2.bm  CollectOxoGMetrics \
         R=$GENOME_FASTA \
         DB_SNP=$DBSNP \
         I=$OUTDIR/${SAMPLENAME}.bam \
         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
 else
-    QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-        picardV2  CollectOxoGMetrics \
+    QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+        picardV2.bm  CollectOxoGMetrics \
         R=$GENOME_FASTA \
         I=$OUTDIR/${SAMPLENAME}.bam \
         O=$OUTDIR/${SAMPLENAME}___OxoG.txt

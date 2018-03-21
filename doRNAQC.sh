@@ -17,14 +17,14 @@ case $BUILD in
     exit 1
 esac
 
-bsub -o LSF/ -J PIC.RNA -We 59 -R "rusage[mem=36]" \
-picard.local CollectRnaSeqMetrics I=$BAM \
+bsub -o LSF/ -J PIC.RNA -We 59 -R "rusage[mem=70]" -M 70 \
+picard.local.bm CollectRnaSeqMetrics I=$BAM \
     O=$(basename $BAM | sed 's/.bam/___RNAStats_FRTS.txt/') \
     STRAND=FIRST_READ_TRANSCRIPTION_STRAND \
     REF_FLAT=$REFFLAT
 
-bsub -o LSF/ -J PIC.RNA -We 59 -R "rusage[mem=36]" \
-picard.local CollectRnaSeqMetrics I=$BAM \
+bsub -o LSF/ -J PIC.RNA -We 59 -R "rusage[mem=70]" -M 70 \
+picard.local.bm CollectRnaSeqMetrics I=$BAM \
     O=$(basename $BAM | sed 's/.bam/___RNAStats_SRTS.txt/') \
     STRAND=SECOND_READ_TRANSCRIPTION_STRAND \
     REF_FLAT=$REFFLAT
