@@ -1,0 +1,33 @@
+#!/bin/bash
+JAVA=/opt/common/CentOS_6/java/jdk1.8.0_31/bin/java
+PICARDJAR=/home/socci/Work/Users/VialeA/NewPicard/PICARD/picard.jar
+
+COMMAND=$1
+
+if [ "$COMMAND" == "" ]; then
+    $JAVA -jar $PICARDJAR 2>&1 | less -R
+    exit
+fi
+
+if [ "$COMMAND" == "LSF" ]; then
+    COMMAND=$2
+    shift 2
+    BSUB="YES"
+else
+    shift
+    BSUB="NO"
+fi
+
+if [ $BSUB == "YES" ]; then
+
+    bsub -o LSF.PIC/ -J PIC_${COMMAND}_$$ -R "rusage[mem=68]" -M 69 -n 4 \
+        $JAVA -Xmx64g -Djava.io.tmpdir=/scratch/socci \
+            -jar $PICARDJAR $COMMAND TMP_DIR=/scratch/socci VALIDATION_STRINGENCY=SILENT $*
+
+else
+
+    $JAVA -Xmx64g -Djava.io.tmpdir=/scratch/socci \
+        -jar $PICARDJAR $COMMAND TMP_DIR=/scratch/socci VALIDATION_STRINGENCY=SILENT $*
+
+fi
+
