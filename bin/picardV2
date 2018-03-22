@@ -1,6 +1,10 @@
 #!/bin/bash
 JAVA=/opt/common/CentOS_6/java/jdk1.8.0_31/bin/java
-PICARDJAR=/home/socci/Work/Users/VialeA/NewPicard/PICARD/picard.jar
+SDIR="$( cd "$( dirname "$0" )" && pwd )"
+PICARDJAR=$SDIR/bin/picard.jar
+
+TMPDIR=/scratch/$USER
+mkdir -p $TMPDIR
 
 COMMAND=$1
 
@@ -21,13 +25,13 @@ fi
 if [ $BSUB == "YES" ]; then
 
     bsub -o LSF.PIC/ -J PIC_${COMMAND}_$$ -R "rusage[mem=68]" -M 69 -n 4 \
-        $JAVA -Xmx64g -Djava.io.tmpdir=/scratch/socci \
-            -jar $PICARDJAR $COMMAND TMP_DIR=/scratch/socci VALIDATION_STRINGENCY=SILENT $*
+        $JAVA -Xmx64g -Djava.io.tmpdir=$TMPDIR \
+            -jar $PICARDJAR $COMMAND TMP_DIR=$TMPDIR VALIDATION_STRINGENCY=SILENT $*
 
 else
 
-    $JAVA -Xmx64g -Djava.io.tmpdir=/scratch/socci \
-        -jar $PICARDJAR $COMMAND TMP_DIR=/scratch/socci VALIDATION_STRINGENCY=SILENT $*
+    $JAVA -Xmx64g -Djava.io.tmpdir=$TMPDIR \
+        -jar $PICARDJAR $COMMAND TMP_DIR=$TMPDIR VALIDATION_STRINGENCY=SILENT $*
 
 fi
 
