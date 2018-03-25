@@ -9,7 +9,7 @@ PIPENAME="PEMapper"
 ##
 # Process command args
 
-TAG=qPEMAP
+TAG=qPEMAPv2
 
 COMMAND_LINE=$*
 function usage {
@@ -115,6 +115,7 @@ if [ "$FASTQFILES" == "" ]; then
     exit
 fi
 
+BWA_THREADS=16
 
 for FASTQ1 in $FASTQFILES; do
 
@@ -149,24 +150,33 @@ for FASTQ1 in $FASTQFILES; do
 
     fi
 
-    QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
-        clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
-    CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
-    CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
+    numBlocks=$(du -sk $FASTQ1 | perl -ane 'print int(2*$F[0]*1.290228e-6)')
 
-    BWA_THREADS=8
+    echo $numBlocks, $(du -sk $FASTQ1)
 
-    echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
+    for blockI in $(seq $numBlocks); do
+        QRUN 3 ${TAG}_MAP_01_${blockI}_$UUID VMEM 5 LONG \
+            $SDIR/bin/scatterAndClipAdapters.sh $numBlocks $blockI $ADAPTER $FASTQ1 $FASTQ2
 
-    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 8 \
-        bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
+        echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" \
+            > $SCRATCH/${BASE1%%.fastq*}_${blockI}.sam
 
-    QRUN 4 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 70 \
-        picardV2 AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
-        LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
-        I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
+        CLIPSEQ1=$SCRATCH/scatterFASTQ/$blockI/${BASE1}___CLIP_${blockI}.fastq
+        CLIPSEQ2=$SCRATCH/scatterFASTQ/$blockI/${BASE2}___CLIP_${blockI}.fastq
 
-    BAMFILES="$BAMFILES $SCRATCH/${BASE1%%.fastq*}.bam"
+        QRUN $BWA_THREADS ${TAG}_MAP_02_${blockI}_$UUID HOLD ${TAG}_MAP_01_${blockI}_$UUID VMEM $(( BWA_THREADS * 2 )) \
+            bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \
+            \>\>$SCRATCH/${BASE1%%.fastq*}_${blockI}.sam
+
+        QRUN 5 ${TAG}_MAP_03_${blockI}_$UUID HOLD ${TAG}_MAP_02_${blockI}_$UUID VMEM 70 \
+            picardV2 AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
+            LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
+            I=$SCRATCH/${BASE1%%.fastq*}_${blockI}.sam \
+            O=$SCRATCH/${BASE1%%.fastq*}_${blockI}.bam
+
+        BAMFILES="$BAMFILES $SCRATCH/${BASE1%%.fastq*}_${blockI}.bam"
+
+    done
 
 done
 
@@ -220,20 +230,20 @@ QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 70 LONG \
 #     CREATE_INDEX=true \
 #     R=$GENOME_FASTA
 
-if [ "$DBSNP" != "" ]; then
-    QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 70 LONG \
-        picardV2  CollectOxoGMetrics \
-        R=$GENOME_FASTA \
-        DB_SNP=$DBSNP \
-        I=$OUTDIR/${SAMPLENAME}.bam \
-        O=$OUTDIR/${SAMPLENAME}___OxoG.txt
-else
-    QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 70 LONG \
-        picardV2  CollectOxoGMetrics \
-        R=$GENOME_FASTA \
-        I=$OUTDIR/${SAMPLENAME}.bam \
-        O=$OUTDIR/${SAMPLENAME}___OxoG.txt
-fi
+# if [ "$DBSNP" != "" ]; then
+#     QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+#         picardV2  CollectOxoGMetrics \
+#         R=$GENOME_FASTA \
+#         DB_SNP=$DBSNP \
+#         I=$OUTDIR/${SAMPLENAME}.bam \
+#         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
+# else
+#     QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+#         picardV2  CollectOxoGMetrics \
+#         R=$GENOME_FASTA \
+#         I=$OUTDIR/${SAMPLENAME}.bam \
+#         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
+# fi
 
 QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__MD \
     rm -rf $SCRATCH
