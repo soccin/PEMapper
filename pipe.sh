@@ -161,7 +161,7 @@ for FASTQ1 in $FASTQFILES; do
     QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 8 \
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN 4 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 70 \
+    QRUN 4 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 33 \
         picardV2 AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
@@ -183,36 +183,36 @@ BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
 OUTDIR=out___$BWATAG
 mkdir -p $OUTDIR
-QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 70 LONG \
+QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 33 LONG \
     picardV2 MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
 
-QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     picardV2 CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA \
     LEVEL=null LEVEL=SAMPLE
 
-QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     picardV2 CollectInsertSizeMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___INS.txt \
 	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
 
-QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     picardV2 CollectGcBiasMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___GCB.txt \
     CHART=$OUTDIR/${SAMPLENAME}___GCB.pdf \
     S=$OUTDIR/${SAMPLENAME}___GCBsummary.txt \
     R=$GENOME_FASTA
 
-QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     picardV2 CollectWgsMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
     R=$GENOME_FASTA
 
-# QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+# QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 33 LONG \
 #     picardV2 MarkDuplicates  \
 #     I=$OUTDIR/${SAMPLENAME}.bam \
 #     O=$OUTDIR/${SAMPLENAME}___MD.bam \
@@ -221,14 +221,14 @@ QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 70 LONG \
 #     R=$GENOME_FASTA
 
 if [ "$DBSNP" != "" ]; then
-    QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+    QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 33 LONG \
         picardV2  CollectOxoGMetrics \
         R=$GENOME_FASTA \
         DB_SNP=$DBSNP \
         I=$OUTDIR/${SAMPLENAME}.bam \
         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
 else
-    QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 70 LONG \
+    QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 33 LONG \
         picardV2  CollectOxoGMetrics \
         R=$GENOME_FASTA \
         I=$OUTDIR/${SAMPLENAME}.bam \
