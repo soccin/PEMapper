@@ -187,7 +187,6 @@ QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 33 LONG \
     picardV2 MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
-
 QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     picardV2 CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
@@ -212,6 +211,12 @@ QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
     R=$GENOME_FASTA
 
+QRUN 4 ${TAG}__05__DOWN HOLD ${TAG}__04__MERGE VMEM 33 LONG \
+    picardV2 DownsampleSam \
+    I=$OUTDIR/${SAMPLENAME}.bam \
+    O=$OUTDIR/${SAMPLENAME}___Dn10.bam \
+    P=0.1 CREATE_INDEX=true
+
 # QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 33 LONG \
 #     picardV2 MarkDuplicates  \
 #     I=$OUTDIR/${SAMPLENAME}.bam \
@@ -221,20 +226,20 @@ QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 33 LONG \
 #     R=$GENOME_FASTA
 
 if [ "$DBSNP" != "" ]; then
-    QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 33 LONG \
+    QRUN 4 ${TAG}__05__OXO HOLD ${TAG}__05__DOWN VMEM 33 LONG \
         picardV2  CollectOxoGMetrics \
         R=$GENOME_FASTA \
         DB_SNP=$DBSNP \
-        I=$OUTDIR/${SAMPLENAME}.bam \
+        I=$OUTDIR/${SAMPLENAME}___Dn10.bam \
         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
 else
-    QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 33 LONG \
+    QRUN 4 ${TAG}__05__OXO HOLD ${TAG}__05__DOWN VMEM 33 LONG \
         picardV2  CollectOxoGMetrics \
         R=$GENOME_FASTA \
-        I=$OUTDIR/${SAMPLENAME}.bam \
+        I=$OUTDIR/${SAMPLENAME}___Dn10.bam \
         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
 fi
 
-QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__MD \
+QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__STATS \
     rm -rf $SCRATCH
 
