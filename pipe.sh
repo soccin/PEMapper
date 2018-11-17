@@ -156,10 +156,14 @@ for FASTQ1 in $FASTQFILES; do
 
     BWA_THREADS=8
 
+    # postClipCount=$(wc -l $SCRATCH/${BASE1}___CLIP.fastq | awk '{print $1}')
+    # echo "postClipCount[${BASE1}] $postClipCount"
+    # wc -l $SCRATCH/${BASE1}___CLIP.fastq >> $OUTDIR/${SAMPLENAME}___CLIPStats.txt
+
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 8 \
-        bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
+        bwaWrapper.sh mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN 4 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 33 \
         picardV2 AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
@@ -180,6 +184,12 @@ echo
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
 
 BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
+
+#
+# Remove NULL BAMS before merge
+# create wrapper:
+#    mergeWrapper.sh
+#
 
 OUTDIR=out___$BWATAG
 mkdir -p $OUTDIR
