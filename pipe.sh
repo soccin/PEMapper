@@ -197,59 +197,28 @@ QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 33 LONG \
     picardV2 MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
-QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 33 LONG \
+QRUN 4 ${TAG}__05__STATSa HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     picardV2 CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA \
     LEVEL=null LEVEL=SAMPLE
 
-QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 33 LONG \
-    picardV2 CollectInsertSizeMetrics \
-    I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___INS.txt \
-	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
-    R=$GENOME_FASTA
-
-QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 33 LONG \
-    picardV2 CollectGcBiasMetrics \
-    I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___GCB.txt \
-    CHART=$OUTDIR/${SAMPLENAME}___GCB.pdf \
-    S=$OUTDIR/${SAMPLENAME}___GCBsummary.txt \
-    R=$GENOME_FASTA
-
-QRUN 4 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 33 LONG \
+QRUN 4 ${TAG}__05__STATSb HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     picardV2 CollectWgsMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
     R=$GENOME_FASTA
 
-QRUN 4 ${TAG}__05__DOWN HOLD ${TAG}__04__MERGE VMEM 33 LONG \
-    picardV2 DownsampleSam \
+QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 33 LONG \
+    picardV2 MarkDuplicates  \
     I=$OUTDIR/${SAMPLENAME}.bam \
-    O=$OUTDIR/${SAMPLENAME}___Dn10.bam \
-    P=0.1 CREATE_INDEX=true
+    O=$OUTDIR/${SAMPLENAME}___MD.bam \
+    M=$OUTDIR/${SAMPLENAME}___MD.txt \
+    CREATE_INDEX=true \
+    R=$GENOME_FASTA
 
-# QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 33 LONG \
-#     picardV2 MarkDuplicates  \
-#     I=$OUTDIR/${SAMPLENAME}.bam \
-#     O=$OUTDIR/${SAMPLENAME}___MD.bam \
-#     M=$OUTDIR/${SAMPLENAME}___MD.txt \
-#     CREATE_INDEX=true \
-#     R=$GENOME_FASTA
-
-if [ "$DBSNP" != "" ]; then
-    QRUN 4 ${TAG}__05__OXO HOLD ${TAG}__05__DOWN VMEM 33 LONG \
-        picardV2  CollectOxoGMetrics \
-        R=$GENOME_FASTA \
-        DB_SNP=$DBSNP \
-        I=$OUTDIR/${SAMPLENAME}___Dn10.bam \
-        O=$OUTDIR/${SAMPLENAME}___OxoG.txt
-else
-    QRUN 4 ${TAG}__05__OXO HOLD ${TAG}__05__DOWN VMEM 33 LONG \
-        picardV2  CollectOxoGMetrics \
-        R=$GENOME_FASTA \
-        I=$OUTDIR/${SAMPLENAME}___Dn10.bam \
-        O=$OUTDIR/${SAMPLENAME}___OxoG.txt
-fi
-
-QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__STATS \
+QRUN 1 ${TAG}__07_CLEANUP HOLD "${TAG}__05__STATS*" \
     rm -rf $SCRATCH
 
+QRUN 1 ${TAG}__08_PURGE HOLD "${TAG}__05__*" \
+    rm -rf $OUTDIR/${SAMPLENAME}___MD.bam $OUTDIR/${SAMPLENAME}.bam \
+        $OUTDIR/${SAMPLENAME}___MD.bai $OUTDIR/${SAMPLENAME}.bai
