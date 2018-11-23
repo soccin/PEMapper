@@ -118,6 +118,8 @@ fi
 
 for FASTQ1 in $FASTQFILES; do
 
+    echo FASTQ_i=$FASTQ1 >> $SCRATCH/RUNLOG
+
 	case "$FASTQ1" in
 		*_R1_*)
 		FASTQ2=${FASTQ1/_R1_/_R2_}
@@ -221,4 +223,7 @@ QRUN 1 ${TAG}__07_CLEANUP HOLD "${TAG}__05__STATS*" \
 
 QRUN 1 ${TAG}__08_PURGE HOLD "${TAG}__05__*" \
     rm -rf $OUTDIR/${SAMPLENAME}___MD.bam $OUTDIR/${SAMPLENAME}.bam \
-        $OUTDIR/${SAMPLENAME}___MD.bai $OUTDIR/${SAMPLENAME}.bai
+        $OUTDIR/${SAMPLENAME}___MD.bai $OUTDIR/${SAMPLENAME}.bai \
+        $(cat $SCRATCH/RUNLOG | fgrep FASTQ_i | perl -pe 's/FASTQ_i=//;s|/[^/]*$|\n|' | sort | uniq)
+
+
