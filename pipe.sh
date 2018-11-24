@@ -218,12 +218,17 @@ QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     CREATE_INDEX=true \
     R=$GENOME_FASTA
 
-QRUN 1 ${TAG}__07_CLEANUP HOLD "${TAG}__05__STATS*" \
-    rm -rf $SCRATCH
+QRUN 4 ${TAG}__05__STATSc HOLD ${TAG}__05__MD VMEM 33 LONG \
+    picardV2 CollectWgsMetrics \
+    I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS_Md.txt \
+    R=$GENOME_FASTA
+
+QRUN 1 ${TAG}__07_CLEANUP HOLD "${TAG}__04__MERGE" \
+    rm -rf $SCRATCH \
+    $(cat $SCRATCH/RUNLOG | fgrep FASTQ_i | perl -pe 's/FASTQ_i=//;s|/[^/]*$|\n|' | sort | uniq)
 
 QRUN 1 ${TAG}__08_PURGE HOLD "${TAG}__05__*" \
     rm -rf $OUTDIR/${SAMPLENAME}___MD.bam $OUTDIR/${SAMPLENAME}.bam \
-        $OUTDIR/${SAMPLENAME}___MD.bai $OUTDIR/${SAMPLENAME}.bai \
-        $(cat $SCRATCH/RUNLOG | fgrep FASTQ_i | perl -pe 's/FASTQ_i=//;s|/[^/]*$|\n|' | sort | uniq)
+        $OUTDIR/${SAMPLENAME}___MD.bai $OUTDIR/${SAMPLENAME}.bai
 
 
