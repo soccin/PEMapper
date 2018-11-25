@@ -24,22 +24,23 @@ QRUN () {
         echo QHOLD=$QHOLD
     fi
 
-    VMEM=""
+    VMEM="2"
     if [ "$1" == "VMEM" ]; then
-        VMEM='-R "rusage[mem='$2']"'
+        TMEM=$2
+	VMEM=$((TMEM/ALLOC))
         shift 2
         echo VMEM=$VMEM
     fi
 
-    TIME="-We 119"
+    TIME="-W 119"
     if [ "$1" == "LONG" ]; then
-        TIME=""
+        TIME="-W 48:00"
         shift 1
         echo LONG Job
     fi
 
-    RET=$(bsub $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*)
-    echo RET=bsub $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*
+    RET=$(bsub $TIME $QHOLD -R "rusage[mem=$VMEM]" -n $ALLOC -J $QTAG -o LSF.PEMAP/ -app anyOS -R "select[type==CentOS7]" $*)
+    echo RET=bsub $TIME $QHOLD -R "rusage[mem=$VMEM]" -n $ALLOC -J $QTAG -o LSF.PEMAP/ -app anyOS -R "select[type==CentOS7]" $*
     echo "#QRUN RET=" $RET
     echo
     JOBID=$(echo $RET | perl -ne '/Job <(\d+)> /;print $1')
