@@ -167,7 +167,7 @@ for FASTQ1 in $FASTQFILES; do
     QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 8 \
         bwaWrapper.sh mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN 4 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 33 \
+    QRUN 3 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 33 \
         picardV2 AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
@@ -199,13 +199,13 @@ QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 33 LONG \
     picardV2 MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
-QRUN 4 ${TAG}__05__STATSa HOLD ${TAG}__04__MERGE VMEM 33 LONG \
+QRUN 3 ${TAG}__05__STATSa HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     picardV2 CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA \
     LEVEL=null LEVEL=SAMPLE
 
-QRUN 4 ${TAG}__05__STATSb HOLD ${TAG}__04__MERGE VMEM 33 LONG \
+QRUN 3 ${TAG}__05__STATSb HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     picardV2 CollectWgsMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
     R=$GENOME_FASTA
@@ -218,7 +218,7 @@ QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 33 LONG \
     CREATE_INDEX=true \
     R=$GENOME_FASTA
 
-QRUN 4 ${TAG}__05__STATSc HOLD ${TAG}__05__MD VMEM 33 LONG \
+QRUN 3 ${TAG}__05__STATSc HOLD ${TAG}__05__MD VMEM 33 LONG \
     picardV2 CollectWgsMetrics \
     I=$OUTDIR/${SAMPLENAME}___MD.bam O=$OUTDIR/${SAMPLENAME}___WGS_Md.txt \
     R=$GENOME_FASTA
