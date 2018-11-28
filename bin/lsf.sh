@@ -34,7 +34,7 @@ QRUN () {
 
     TIME="-W 119"
     if [ "$1" == "LONG" ]; then
-        TIME="-W 48:00"
+        TIME="-W 16:00"
         shift 1
         echo LONG Job
     fi
