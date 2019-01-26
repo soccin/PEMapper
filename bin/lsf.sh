@@ -39,7 +39,7 @@ QRUN () {
         echo LONG Job
     fi
 
-    RET=$(bsub $TIME $QHOLD -R "rusage[mem=$VMEM]" -n $ALLOC -J $QTAG -o LSF.PEMAP/ -app anyOS -R "select[type==CentOS7]" $*)
+    RET=$(bsub $TIME $QHOLD -R "rusage[mem=$VMEM]" -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*)
     echo RET=bsub $TIME $QHOLD -R "rusage[mem=$VMEM]" -n $ALLOC -J $QTAG -o LSF.PEMAP/ -app anyOS -R "select[type==CentOS7]" $*
     echo "#QRUN RET=" $RET
     echo
