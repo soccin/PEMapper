@@ -107,7 +107,7 @@ BWA_VERSION=$(bwa 2>&1 | fgrep Version | awk '{print $2}')
 JOBS=""
 BAMFILES=""
 
-FASTQFILES=$(find -L $SAMPLEDIRS -name "*[_.]R1*.fastq.gz")
+FASTQFILES=$(find -L $SAMPLEDIRS -name "*[_.]R1*.fastq")
 echo "FASTQFILES="$FASTQFILES
 
 if [ "$FASTQFILES" == "" ]; then
@@ -193,7 +193,7 @@ BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 #    mergeWrapper.sh
 #
 
-OUTDIR=out___$BWATAG
+OUTDIR=out___${BWATAG}_${RunID}
 mkdir -p $OUTDIR
 QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 33 LONG \
     picardV2 MergeSamFiles SO=coordinate CREATE_INDEX=true \
