@@ -99,11 +99,6 @@ echo BWA_OPTS=$BWA_OPTS >> $SCRATCH/RUNLOG
 echo GENOME=$GENOME >> $SCRATCH/RUNLOG
 echo TAG=$TAG >> $SCRATCH/RUNLOG
 
-
-##
-# HiSeq TrueSeq maximal common adapter
-
-ADAPTER="AGATCGGAAGAGC"
 BWA_VERSION=$(bwa 2>&1 | fgrep Version | awk '{print $2}')
 
 JOBS=""
@@ -140,28 +135,12 @@ for FASTQ1 in $FASTQFILES; do
     BASE2=$(echo $FASTQ2 | tr '/' '_')
     UUID=$(uuidgen)
 
-    # if MINLENGTH not set in ENV then set to 1/2 read length
-    if [ "$MINLENGTH" == "" ]; then
-
-        # Get readlength
-        ONE_HALF_READLENGTH=$(zcat $FASTQ1 | $SDIR/bin/getReadLength.py | awk '{printf("%d\n",$1/2)}')
-        echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH
-        echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH >> $SCRATCH/RUNLOG
-        export MINLENGTH=$ONE_HALF_READLENGTH
-
-    fi
-
-    QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
-        clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
-    CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
-    CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
-
     BWA_THREADS=24
 
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 64 \
-        bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
+    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID VMEM 64 \
+        bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $FASTQ1 $FASTQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
         picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
