@@ -15,20 +15,20 @@ QRUN () {
 
     if [ "$LSF_VERSION" == "" ]; then
         export LSF_VERSION=$(echo $LSF_SERVERDIR | perl -ne 'm|/([^/]+)/linux|;print $1')
-        setting LSF_VERSION="$LSF_VERSION"
+        echo setting LSF_VERSION="$LSF_VERSION"
     fi
 
     case $LSF_VERSION in
         10.1)
             TIME_FLAG="-W"
-            TIME_SHORT=$TIME_FLAG "59"
-            TIME_LONG=$TIME_FLAG "359"
+            TIME_SHORT="$TIME_FLAG 59"
+            TIME_LONG="$TIME_FLAG 359"
 
         ;;
 
         9.1)
             TIME_FLAG="-We"
-            TIME_SHORT=$TIME_FLAG "119"
+            TIME_SHORT="$TIME_FLAG 119"
             TIME_LONG=""
         ;;
 
