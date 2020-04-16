@@ -1,0 +1,3 @@
+GENOME_DIR=/ifs/depot/assemblies/D.rerio/GRCz10
+GENOME_FASTA=$GENOME_DIR/GRCz10.fasta
+GENOME_BWA=$GENOME_DIR/index/bwa/0.7.12/GRCz10.fasta
