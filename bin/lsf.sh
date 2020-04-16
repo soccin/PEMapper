@@ -27,8 +27,8 @@ QRUN () {
         ;;
 
         9.1)
-            TIME_FLAG="-We"
-            TIME_SHORT="$TIME_FLAG 119"
+            TIME_FLAG=""
+            TIME_SHORT=""
             TIME_LONG=""
         ;;
 
