@@ -32,5 +32,12 @@ fi
 # FASTQ1=$SCRATCH/tmp1_$$_.fastq
 # FASTQ2=$SCRATCH/tmp2_$$_.fastq
 
-zcat $FASTQ1 >${BASE1}___CLIP.fastq
+zcat $FASTQ1 | wc -l &
+zcat $FASTQ1 >${BASE1}___CLIP.fastq &
 zcat $FASTQ2 >${BASE2}___CLIP.fastq
+
+echo "Holding ..."
+wait
+echo "Done"
+
+wc -l ${BASE1}___CLIP.fastq ${BASE2}___CLIP.fastq
