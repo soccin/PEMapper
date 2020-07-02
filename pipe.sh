@@ -185,9 +185,12 @@ BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
 OUTDIR=out___$BWATAG
 mkdir -p $OUTDIR
-QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
+QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*" VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
+
+QRUN 2 ${TAG}__05__FIXHDR HOLD ${TAG}__04__MERGE VMEM 32 \
+    $SDIR/fixHeader.sh $OUTDIR/${SAMPLENAME}.bam
 
 QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local CollectAlignmentSummaryMetrics \
@@ -204,5 +207,5 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
 QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__STATS \
     rm -rf $SCRATCH
 
-QRUN 2 ${TAG}__08_FIXHDR HOLD ${TAG}__05__STATS VMEM 32 \
-    $SDIR/fixHeader.sh $OUTDIR/${SAMPLENAME}.bam
+QRUN 2 ${TAG}__08_CLEANUP2 HOLD ${TAG}__05__STATS VMEM 32 \
+    $SDIR/cleanUp.sh $OUTDIR/${SAMPLENAME}.bam
