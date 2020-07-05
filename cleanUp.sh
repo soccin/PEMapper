@@ -4,5 +4,7 @@ export PATH=$SDIR/bin:$PATH
 
 BAM=$1
 
-rm $BAM ${BAM/.bam/.bai}
+mkdir -p cache
+
+mv $BAM ${BAM/.bam/.bai} cache
 
