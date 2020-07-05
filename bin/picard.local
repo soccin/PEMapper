@@ -9,7 +9,7 @@ if [ "$COMMAND" == "" ]; then
     exit
 fi
 
-$JAVA -Xmx23g -XX:ParallelGCThreads=5 -Djava.io.tmpdir=/scratch/socci \
+$JAVA -Xmx63g -XX:ParallelGCThreads=5 -Djava.io.tmpdir=/scratch/socci \
     -jar $PICARDJAR $COMMAND TMP_DIR=/scratch/socci VALIDATION_STRINGENCY=SILENT $*
 
 
