@@ -189,6 +189,9 @@ QRUN 3 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*" VMEM 66 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
+QRUN 1 ${TAG}__04b_CLEANUP HOLD ${TAG}__04__MERGE \
+    rm -rf "$SCRATCH/*sam" "$SCRATCH/*fastq"
+
 QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 66 LONG \
     picard.local CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
@@ -204,7 +207,7 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 66 LONG \
 QRUN 5 ${TAG}__05__FIXHDR HOLD ${TAG}__05__STATS VMEM 65 LONG \
     $SDIR/fixHeader.sh $OUTDIR/${SAMPLENAME}.bam
 
-QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__STATS \
+QRUN 1 ${TAG}__07_CLEANUP HOLD {TAG}__05__STATS \
     rm -rf $SCRATCH
 
 QRUN 2 ${TAG}__08_CLEANUP2 HOLD ${TAG}__07_CLEANUP VMEM 32 \
