@@ -163,7 +163,7 @@ for FASTQ1 in $FASTQFILES; do
     QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 32 \
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN 5 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 65 LONG \
+    QRUN 4 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 65 LONG \
         picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=30000000 CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
@@ -186,8 +186,9 @@ BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 OUTDIR=out___$BWATAG
 mkdir -p $OUTDIR
 QRUN 3 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*" VMEM 66 LONG \
-    picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
-    O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
+    "picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
+    O=$OUTDIR/${SAMPLENAME}.bam $INPUTS; \
+    md5sum $OUTDIR/${SAMPLENAME}.bam > $OUTDIR/${SAMPLENAME}.bam.md5"
 
 QRUN 1 ${TAG}__04b_CLEANUP HOLD ${TAG}__04__MERGE \
     rm -rf "$SCRATCH/*sam" "$SCRATCH/*fastq"
@@ -204,10 +205,10 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 66 LONG \
 	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
 
-QRUN 5 ${TAG}__05__FIXHDR HOLD ${TAG}__05__STATS VMEM 65 LONG \
-    $SDIR/fixHeader.sh $OUTDIR/${SAMPLENAME}.bam
+QRUN 4 ${TAG}__05__FIXHDR HOLD ${TAG}__05__STATS VMEM 65 LONG \
+    $SDIR/fixHeader.sh $GENOME_FASTA $OUTDIR/${SAMPLENAME}.bam
 
-QRUN 1 ${TAG}__07_CLEANUP HOLD {TAG}__05__STATS \
+QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__STATS \
     rm -rf $SCRATCH
 
 QRUN 2 ${TAG}__08_CLEANUP2 HOLD ${TAG}__07_CLEANUP VMEM 32 \
