@@ -189,7 +189,7 @@ QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+QRUN 2 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA \
@@ -222,21 +222,21 @@ QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     R=$GENOME_FASTA
 
 if [ "$DBSNP" != "" ]; then
-    QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+    QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
         picardV2  CollectOxoGMetrics \
         R=$GENOME_FASTA \
         DB_SNP=$DBSNP \
         I=$OUTDIR/${SAMPLENAME}.bam \
         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
 else
-    QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+    QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
         picardV2  CollectOxoGMetrics \
         R=$GENOME_FASTA \
         I=$OUTDIR/${SAMPLENAME}.bam \
         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
 fi
 
-QRUN 1 ${TAG}__06__POST HOLD ${TAG}__05__STATS \
+QRUN 1 ${TAG}__06__POST HOLD "${TAG}__05__STATS*" \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
 QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__MD \
