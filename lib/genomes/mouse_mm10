@@ -1,2 +1,2 @@
-GENOME_FASTA=/ifs/depot/assemblies/M.musculus/mm10/index/bwa/0.7.12/mm10.fasta
-GENOME_BWA=/ifs/depot/assemblies/M.musculus/mm10/index/bwa/0.7.12/mm10.fasta
+GENOME_FASTA=/juno/depot/assemblies/M.musculus/mm10/index/bwa/0.7.12/mm10.fasta
+GENOME_BWA=/juno/depot/assemblies/M.musculus/mm10/index/bwa/0.7.12/mm10.fasta
