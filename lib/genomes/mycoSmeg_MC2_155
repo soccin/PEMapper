@@ -1,2 +1,2 @@
-GENOME_FASTA=/ifs/work/socci/Depot/Genomes/M.smegmatis/mycoSmeg_MC2_155/myco_Smeg_MC2_155.fasta
-GENOME_BWA=/ifs/work/socci/Depot/Genomes/M.smegmatis/mycoSmeg_MC2_155/index/bwa7/myco_Smeg_MC2_155.fasta
+GENOME_FASTA=/juno/work/bic/socci/depot/Genomes/M.smegmatis/mycoSmeg_MC2_155/myco_Smeg_MC2_155.fasta
+GENOME_BWA=/juno/work/bic/socci/depot/Genomes/M.smegmatis/mycoSmeg_MC2_155/index/bwa7/myco_Smeg_MC2_155.fasta
