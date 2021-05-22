@@ -1,4 +1,4 @@
 #
-GENOME_DIR=/ifs/depot/assemblies/S.cerevisiae/SK1_MvO_v1
+GENOME_DIR=/juno/depot/assemblies/S.cerevisiae/SK1_MvO_v1
 GENOME_FASTA=$GENOME_DIR/SK1_MvO_v1_SGRPappended.fa
 GENOME_BWA=$GENOME_DIR/index/bwa/0.7.12/SK1_MvO_v1_SGRPappended.fa

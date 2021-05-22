@@ -1,4 +1,4 @@
 #
-GENOME_DIR=/ifs/depot/assemblies/S.cerevisiae/Ensemble
+GENOME_DIR=/juno/depot/assemblies/S.cerevisiae/Ensemble
 GENOME_FASTA=$GENOME_DIR/S.cere_R64.fa
 GENOME_BWA=$GENOME_DIR/index/bwa/0.7.12/S.cere_R64.fa
