@@ -29,18 +29,23 @@ case $LSF_VERSION in
 
 esac
 
+STRAND_DB=/home/socci/Work/Strand/db
 
 case $BUILD in
     mm10)
-    REFFLAT=/ifs/work/socci/Pipelines/CBE/rnaseq_pipeline/data/mm10/refFlat__mm10.txt.gz
+    REFFLAT=$STRAND_DB/refFlat__mm10.txt.gz
     ;;
 
     hg19)
-    REFFLAT=/ifs/work/socci/Pipelines/CBE/rnaseq_pipeline/data/hg19/refFlat__hg19.txt.gz
+    REFFLAT=$STRAND_DB/refFlat__hg19.txt.gz
     ;;
 
     GRCz10)
-    REFFLAT=/home/socci/Work/Strand/db/refflat_GRCz10.txt.gz
+    REFFLAT=$STRAND_DB/refflat_GRCz10.txt.gz
+    ;;
+
+    dm3)
+    REFFLAT=$STRAND_DB/refflat_dm3.txt.gz
     ;;
 
     *)
