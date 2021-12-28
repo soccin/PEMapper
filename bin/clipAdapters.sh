@@ -27,8 +27,8 @@ fi
 # Debug limit
 # Added $$ to name so no collisions with multiple jobs
 #
-# gzcat $FASTQ1 | head -40000 >$SCRATCH/tmp1_$$_.fastq
-# gzcat $FASTQ2 | head -40000 >$SCRATCH/tmp2_$$_.fastq
+# zcat $FASTQ1 | head -40000 >$SCRATCH/tmp1_$$_.fastq
+# zcat $FASTQ2 | head -40000 >$SCRATCH/tmp2_$$_.fastq
 # FASTQ1=$SCRATCH/tmp1_$$_.fastq
 # FASTQ2=$SCRATCH/tmp2_$$_.fastq
 
