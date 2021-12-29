@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "BWA.WRAPPER"
+
+# Original Call
+#   bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
+
+bwa $1 $2 $3 $4 $5 $6 >> $7
+md5sum $7 > ${7}.md5

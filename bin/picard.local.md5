@@ -1,0 +1,83 @@
+#!/bin/bash
+SDIR="$( cd "$( dirname "$0" )" && pwd )"
+
+JAVA=/opt/common/CentOS_6/java/jdk1.8.0_31/bin/java
+PICARDJAR=$SDIR/jar/picard.jar
+
+COMMAND=$1
+shift 1
+
+if [ "$COMMAND" == "" ]; then
+    $JAVA -jar $PICARDJAR 2>&1 | less -R
+    exit
+fi
+
+TDIR=/scratch/socci
+if [ -e /fscratch/socci ]; then
+    TDIR=/fscratch/socci
+fi
+
+###########################################################################
+##
+## Check the MD5 sig of the input file (I=XYZ) to make sure it is ok
+## Try MAXTRYS times and if not then just exit
+##
+
+retry=1
+MAXTRYS=3
+while [ "$retry" -le "$MAXTRYS" ]; do
+    echo "Try #" $retry
+    for arg in $*; do
+        key=$(echo $arg | sed 's/=.*//')
+        value=$(echo $arg | sed 's/.*=//')
+        if [ "$key" == "I" ]; then
+            echo $arg, $key, $value
+            INPUT_ARG=$value
+            MD5CHECK=$(md5sum -c ${INPUT_ARG}.md5)
+            if [[ "$MD5CHECK" =~ ": OK" ]]; then
+                echo OK
+                retry=99
+            else
+                echo "BAD MD5 for" $INPUT_ARG
+                if [ "$retry" == "$MAXTRYS" ]; then
+                    echo
+                    echo Exiting after $MAXTRYS retrys
+                    echo
+                    exit 1
+                fi
+                echo sleep $(( retry * retry * 60 ))
+                sleep $(( retry * retry * 60 ))
+            fi
+        fi
+    done
+    retry=$(( retry + 1 ))
+done
+
+##
+##
+###########################################################################
+
+$JAVA -Xmx23g -Djava.io.tmpdir=$TDIR \
+    -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
+
+###########################################################################
+##
+## When done compute the MD5 on the output file
+##
+
+for arg in $*; do
+    key=$(echo $arg | sed 's/=.*//')
+    value=$(echo $arg | sed 's/.*=//')
+    if [ "$key" == "O" ]; then
+        echo $arg, $key $value
+        OUTPUT_ARG=$value
+        echo -n md5sum $OUTPUT_ARG \> ${OUTPUT_ARG}.md5 "..."
+        md5sum $OUTPUT_ARG > ${OUTPUT_ARG}.md5
+        echo "done"
+    fi
+done
+
+##
+##
+###########################################################################
+
