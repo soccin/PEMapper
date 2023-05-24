@@ -247,5 +247,7 @@ QRUN 1 ${TAG}__06__POST HOLD "${TAG}__05__STATS*" \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
 QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__06__POST \
-    rm -rf $SCRATCH $OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
+    rm -rf $SCRATCH
+
+#$OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
 
