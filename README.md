@@ -1,6 +1,8 @@
 # PEMapper
 
-- Now using system cutadapt
+## Branch _flavor/scCNV_
 
-- Also uses new picard with a local JAR file
-
+Version for mapping single cell CNV data.
+- No clipping
+- Minimal stats
+- Delete no MD bam
