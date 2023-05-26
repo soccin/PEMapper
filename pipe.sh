@@ -164,7 +164,8 @@ for FASTQ1 in $FASTQFILES; do
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
-        postProcessSAM.sh $SCRATCH/${BASE1%%.fastq*}.sam $SCRATCH/${BASE1%%.fastq*}.bam
+        postProcessSAM.sh $SCRATCH/${BASE1%%.fastq*}.sam $SCRATCH/${BASE1%%.fastq*}.bam \
+            $SAMPLENAME ${BASE1%%_R1_*}
 
     BAMFILES="$BAMFILES $SCRATCH/${BASE1%%.fastq*}.bam"
 
@@ -193,6 +194,8 @@ mkdir -p $OUTDIR
 QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
+
+exit
 
 QRUN 2 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local CollectAlignmentSummaryMetrics \
