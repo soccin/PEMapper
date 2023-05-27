@@ -28,6 +28,7 @@ QRUN () {
     # Where PID==$$ is the Process ID, a unique identifier for
     # each running process.
     LSFDIR=LSF.PEMAP/$$/$D3/$D2/$D1
+    mkdir -p $LSFDIR
 
     if [ "$LSF_VERSION" == "" ]; then
         export LSF_VERSION=$(echo $LSF_SERVERDIR | perl -ne 'm|/([^/]+)/linux|;print $1')
