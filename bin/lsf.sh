@@ -27,7 +27,7 @@ QRUN () {
     # of a large number of files/directories.
     # Where PID==$$ is the Process ID, a unique identifier for
     # each running process.
-    LSFDIR=LSF.PEMAP/$$/$D3/$D2/$D1
+    LSFDIR=LSF.PEMAP/$D2/$D1/$$
     mkdir -p $LSFDIR
 
     if [ "$LSF_VERSION" == "" ]; then
