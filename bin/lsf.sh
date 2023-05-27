@@ -13,6 +13,22 @@ QSYNC=#
 
 QRUN () {
 
+    # Get current Unix timestamp
+    TS=$(date +%s)
+
+    # Calculate the modulo and division of timestamp by 100 to
+    # create a multi-level directory structure:
+    D1=$((TS % 100))
+    T2=$((TS / 100))
+    D2=$((T2 % 100))
+    D3=$((T2 / 100))
+
+    # Create a multi-level directory path for efficient handling
+    # of a large number of files/directories.
+    # Where PID==$$ is the Process ID, a unique identifier for
+    # each running process.
+    LSFDIR=LSF.PEMAP/$$/$D3/$D2/$D1
+
     if [ "$LSF_VERSION" == "" ]; then
         export LSF_VERSION=$(echo $LSF_SERVERDIR | perl -ne 'm|/([^/]+)/linux|;print $1')
         echo setting LSF_VERSION="$LSF_VERSION"
@@ -73,8 +89,8 @@ QRUN () {
         echo LONG Job
     fi
 
-    RET=$(bsub $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*)
-    echo RET=bsub $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*
+    RET=$(bsub $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*)
+    echo RET=bsub $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
     echo "#QRUN RET=" $RET
     echo
     JOBID=$(echo $RET | perl -ne '/Job <(\d+)> /;print $1')
