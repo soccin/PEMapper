@@ -90,6 +90,11 @@ QRUN () {
         echo LONG Job
     fi
 
+    if [ "$LSF_TIME_OVERRIDE" != "" ]; then
+        TIME="$TIME_FLAG $LSF_TIME_OVERRIDE"
+        echo "Overriding LSF-TIME setting to ${TIME}"
+    fi
+
     HOSTS=""
     if [ "$BHOST_EXC" != "" ]; then
         EXCARG=$(echo $BHOST_EXC | tr ',' '\n' | awk '{print "(hname!="$1")"}' | xargs  | sed 's/ /\&\&/g')
