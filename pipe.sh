@@ -21,7 +21,7 @@ function usage {
     exit
 }
 
-BWA_OPTS=""
+BWA_OPTS="-M"
 SAMPLENAME="__NotDefined"
 while getopts "s:hgb:t:" opt; do
     case $opt in
@@ -185,11 +185,11 @@ BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
 OUTDIR=out___$BWATAG
 mkdir -p $OUTDIR
-QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
-    picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
+QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
+    picard.local MergeSamFiles MAX_RECORDS_IN_RAM=5000000 SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
-QRUN 2 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+QRUN 2 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 36 LONG \
     picard.local CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA \
@@ -200,6 +200,9 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___INS.txt \
 	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
+
+QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__04__MERGE \
+    rm -rf $SCRATCH
 
 # QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
 #     picard.local CollectGcBiasMetrics \
@@ -213,8 +216,8 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picardV2 MarkDuplicates USE_JDK_INFLATER=TRUE USE_JDK_DEFLATER=TRUE \
+QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 36 LONG \
+    picardV2 MarkDuplicates USE_JDK_INFLATER=TRUE USE_JDK_DEFLATER=TRUE MAX_RECORDS_IN_RAM=5000000 \
     I=$OUTDIR/${SAMPLENAME}.bam \
     O=$OUTDIR/${SAMPLENAME}___MD.bam \
     M=$OUTDIR/${SAMPLENAME}___MD.txt \
@@ -239,8 +242,6 @@ QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
 QRUN 1 ${TAG}__06__POST HOLD "${TAG}__05__STATS*" \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
-QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__06__POST \
-    rm -rf $SCRATCH
 
 #$OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
 
