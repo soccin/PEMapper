@@ -13,6 +13,23 @@ QSYNC=#
 
 QRUN () {
 
+    # Get current Unix timestamp
+    TS=$(date +%s)
+
+    # Calculate the modulo and division of timestamp by 100 to
+    # create a multi-level directory structure:
+    D1=$((TS % 100))
+    T2=$((TS / 100))
+    D2=$((T2 % 100))
+    D3=$((T2 / 100))
+
+    # Create a multi-level directory path for efficient handling
+    # of a large number of files/directories.
+    # Where PID==$$ is the Process ID, a unique identifier for
+    # each running process.
+    LSFDIR=LSF.PEMAP/$D2/$D1/$$
+    mkdir -p $LSFDIR
+
     if [ "$LSF_VERSION" == "" ]; then
         export LSF_VERSION=$(echo $LSF_SERVERDIR | perl -ne 'm|/([^/]+)/linux|;print $1')
         echo setting LSF_VERSION="$LSF_VERSION"
@@ -73,8 +90,20 @@ QRUN () {
         echo LONG Job
     fi
 
-    RET=$(bsub $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*)
-    echo RET=bsub $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*
+    if [ "$LSF_TIME_OVERRIDE" != "" ]; then
+        TIME="$TIME_FLAG $LSF_TIME_OVERRIDE"
+        echo "Overriding LSF-TIME setting to ${TIME}"
+    fi
+
+    HOSTS=""
+    if [ "$BHOST_EXC" != "" ]; then
+        EXCARG=$(echo $BHOST_EXC | tr ',' '\n' | awk '{print "(hname!="$1")"}' | xargs  | sed 's/ /\&\&/g')
+        HOSTS="-R select["$EXCARG"]"
+        echo "EXCLUDE="$HOSTS
+    fi
+
+    RET=$(bsub $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*)
+    echo RET=bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
     echo "#QRUN RET=" $RET
     echo
     JOBID=$(echo $RET | perl -ne '/Job <(\d+)> /;print $1')
