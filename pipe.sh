@@ -201,12 +201,12 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
 	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picard.local CollectGcBiasMetrics \
-    I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___GCB.txt \
-    CHART=$OUTDIR/${SAMPLENAME}___GCB.pdf \
-    S=$OUTDIR/${SAMPLENAME}___GCBsummary.txt \
-    R=$GENOME_FASTA
+# QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+#     picard.local CollectGcBiasMetrics \
+#     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___GCB.txt \
+#     CHART=$OUTDIR/${SAMPLENAME}___GCB.pdf \
+#     S=$OUTDIR/${SAMPLENAME}___GCBsummary.txt \
+#     R=$GENOME_FASTA
 
 QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local CollectWgsMetrics \
@@ -221,24 +221,26 @@ QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     CREATE_INDEX=true \
     R=$GENOME_FASTA
 
-if [ "$DBSNP" != "" ]; then
-    QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-        picardV2  CollectOxoGMetrics \
-        R=$GENOME_FASTA \
-        DB_SNP=$DBSNP \
-        I=$OUTDIR/${SAMPLENAME}.bam \
-        O=$OUTDIR/${SAMPLENAME}___OxoG.txt
-else
-    QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-        picardV2  CollectOxoGMetrics \
-        R=$GENOME_FASTA \
-        I=$OUTDIR/${SAMPLENAME}.bam \
-        O=$OUTDIR/${SAMPLENAME}___OxoG.txt
-fi
+# if [ "$DBSNP" != "" ]; then
+#     QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+#         picardV2  CollectOxoGMetrics \
+#         R=$GENOME_FASTA \
+#         DB_SNP=$DBSNP \
+#         I=$OUTDIR/${SAMPLENAME}.bam \
+#         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
+# else
+#     QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+#         picardV2  CollectOxoGMetrics \
+#         R=$GENOME_FASTA \
+#         I=$OUTDIR/${SAMPLENAME}.bam \
+#         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
+# fi
 
 QRUN 1 ${TAG}__06__POST HOLD "${TAG}__05__STATS*" \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
-QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__05__MD \
+QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__06__POST \
     rm -rf $SCRATCH
+
+#$OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
 
