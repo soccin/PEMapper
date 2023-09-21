@@ -39,7 +39,7 @@ QRUN () {
         10.1)
             TIME_FLAG="-W"
             TIME_SHORT="$TIME_FLAG 59"
-            TIME_LONG="$TIME_FLAG 359"
+            TIME_LONG="$TIME_FLAG 24:00"
 
         ;;
 
