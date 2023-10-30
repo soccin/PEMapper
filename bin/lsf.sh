@@ -43,6 +43,13 @@ QRUN () {
 
         ;;
 
+        34)
+            TIME_FLAG="-W"
+            TIME_SHORT="$TIME_FLAG 59"
+            TIME_LONG="$TIME_FLAG 24:00"
+
+        ;;
+
         9.1)
             TIME_FLAG=""
             TIME_SHORT=""
