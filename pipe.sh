@@ -183,7 +183,7 @@ INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
 
 BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
-OUTDIR=out___$BWATAG
+OUTDIR=out___$BWATAG/$SAMPLENAME
 mkdir -p $OUTDIR
 QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
     picard.local MergeSamFiles MAX_RECORDS_IN_RAM=5000000 SO=coordinate CREATE_INDEX=true \
