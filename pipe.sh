@@ -158,15 +158,33 @@ for FASTQ1 in $FASTQFILES; do
 
     BWA_THREADS=8
 
-    echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
+    echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" > $SCRATCH/${BASE1%%.fastq*}.version.txt
+
+    #
+    # mapBwaAndAddRG.sh
+    #
+    #   OUTPUT=$1
+    #   GENOME_BWA=$2
+    #   CLIPSEQ1=$3
+    #   CLIPSEQ2=$4
+    #   BASE1=$5
+    #   SAMPLENAME=$6
+    #   VERSION=$7
+    #   BWA_THREADS=$8
+    #   shift 8
+    #   BWA_OPTS="$@"
 
     QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 32 \
-        bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
-
-    QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
-        picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
-        LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
-        I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
+        mapBwaAndAddRG.sh \
+            $SCRATCH/${BASE1%%.fastq*}.bam \
+            $GENOME_BWA \
+            $CLIPSEQ1 \
+            $CLIPSEQ2 \
+            $BASE1 \
+            $SAMPLENAME \
+            $SCRATCH/${BASE1%%.fastq*}.version.txt \
+            $BWA_THREADS \
+            $BWA_OPTS
 
     BAMFILES="$BAMFILES $SCRATCH/${BASE1%%.fastq*}.bam"
 
@@ -185,9 +203,6 @@ BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
 OUTDIR=out___$BWATAG/$SAMPLENAME
 mkdir -p $OUTDIR
-
-#     picard.local MergeSamFiles MAX_RECORDS_IN_RAM=5000000 SO=coordinate CREATE_INDEX=true \
-#     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
 QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
     mergeSamFiles.sh $OUTDIR/${SAMPLENAME}.bam $INPUTS
@@ -220,15 +235,9 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
     R=$GENOME_FASTA
 
-#     picardV2 MarkDuplicates USE_JDK_INFLATER=TRUE USE_JDK_DEFLATER=TRUE MAX_RECORDS_IN_RAM=5000000 \
-#     I=$OUTDIR/${SAMPLENAME}.bam \
-#     O=$OUTDIR/${SAMPLENAME}___MD.bam \
-#     M=$OUTDIR/${SAMPLENAME}___MD.txt \
-#     CREATE_INDEX=true \
-#     R=$GENOME_FASTA
-
 QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 36 LONG \
     markDuplicates.sh $OUTDIR/${SAMPLENAME}.bam $GENOME_FASTA
+
 
 # if [ "$DBSNP" != "" ]; then
 #     QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
