@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 #
 # picard.local MergeSamFiles \
 #     MAX_RECORDS_IN_RAM=5000000 SO=coordinate CREATE_INDEX=true \
@@ -25,8 +27,10 @@ else
     TDIR=/scratch/socci/PEMapper/$(uuid_short)
 fi
 
-echo TDIR=$TDIR | tee -a $LOG
+echo TDIR=$TDIR | tee $LOG
 mkdir -vp $TDIR | tee -a $LOG
+
+trap on_exit EXIT
 
 picard.local MergeSamFiles \
      MAX_RECORDS_IN_RAM=5000000 SO=coordinate CREATE_INDEX=true \
