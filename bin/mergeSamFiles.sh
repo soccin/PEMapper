@@ -27,6 +27,8 @@ else
     TDIR=/scratch/socci/PEMapper/$(uuid_short)
 fi
 
+mkdir -p $(dirname $OUTPUT)
+
 echo TDIR=$TDIR | tee $LOG
 mkdir -vp $TDIR | tee -a $LOG
 
@@ -34,12 +36,12 @@ trap on_exit EXIT
 
 picard.local MergeSamFiles \
      MAX_RECORDS_IN_RAM=5000000 SO=coordinate CREATE_INDEX=true \
-     O=$TDIR/mergeSamFiles.bam $@ | tee -a $LOG
+     O=$TDIR/$(basename $OUTPUT) $@ | tee -a $LOG
 
-md5sum $TDIR/mergeSamFiles.bam | tee -a $LOG
-rsync -a $TDIR/mergeSamFiles.bam $OUTPUT ${OUTPUT/.bam/.bai} | tee -a $LOG
+md5sum $TDIR/$(basename $OUTPUT) | tee -a $LOG
+rsync -a $TDIR/*.ba? $(dirname $OUTPUT) | tee -a $LOG
 sleep 60
-rsync -avP $TDIR/mergeSamFiles.bam $OUTPUT ${OUTPUT/.bam.bai} | tee -a $LOG
+rsync -avP $TDIR/*.ba? $(dirname $OUTPUT) | tee -a $LOG
 md5sum $OUTPUT | tee -a $LOG
 
 
