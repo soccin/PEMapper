@@ -186,12 +186,11 @@ BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 OUTDIR=out___$BWATAG/$SAMPLENAME
 mkdir -p $OUTDIR
 
-# QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
 #     picard.local MergeSamFiles MAX_RECORDS_IN_RAM=5000000 SO=coordinate CREATE_INDEX=true \
 #     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
 QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
-    mergeSamFile.sh $OUTDIR/${SAMPLENAME}.bam $INPUTS
+    mergeSamFiles.sh $OUTDIR/${SAMPLENAME}.bam $INPUTS
 
 
 QRUN 2 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 36 LONG \
@@ -221,7 +220,6 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
     R=$GENOME_FASTA
 
-# QRUN 4 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 36 LONG \
 #     picardV2 MarkDuplicates USE_JDK_INFLATER=TRUE USE_JDK_DEFLATER=TRUE MAX_RECORDS_IN_RAM=5000000 \
 #     I=$OUTDIR/${SAMPLENAME}.bam \
 #     O=$OUTDIR/${SAMPLENAME}___MD.bam \
