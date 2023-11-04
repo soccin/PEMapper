@@ -26,7 +26,7 @@ MAPPING=$2
 for sample in $(cat $MAPPING | cut -f2 | sort | uniq); do
 
     NUMJOBS=$(bjobs | wc -l);
-    while [ $NUMJOBS -gt 1000 ]; do
+    while [ $NUMJOBS -gt 2000 ]; do
         date
         echo NUMJOBS=$NUMJOBS;
         NUMJOBS=$(bjobs | wc -l);
