@@ -46,7 +46,7 @@ mkdir -vp $TDIR | tee -a $LOG
 trap on_exit EXIT
 
 bwa mem $BWA_OPTS -t $BWA_THREADS -H $VERSION $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \
-    | picard.local AddOrReplaceReadGroups  MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
+    | picardV2 AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=/dev/stdin \
         O=$TDIR/$(basename $OUTPUT)
