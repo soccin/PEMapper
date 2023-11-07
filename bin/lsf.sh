@@ -103,13 +103,16 @@ QRUN () {
     fi
 
     HOSTS=""
-    if [ "$BHOST_EXC" != "" ]; then
-        EXCARG=$(echo $BHOST_EXC | tr ',' '\n' | awk '{print "(hname!="$1")"}' | xargs  | sed 's/ /\&\&/g')
-        HOSTS="-R select["$EXCARG"]"
-        echo "EXCLUDE="$HOSTS
-    fi
+    # Does not work gets
+    #   Error in select section: Error near """ : incorrect usage. Job not submitted.
+    #
+    # if [ "$BHOST_EXC" != "" ]; then
+    #     EXCARG=$(echo $BHOST_EXC | tr ',' '\n' | awk '{print "(hname!="$1")"}' | xargs  | sed 's/ /\&\&/g')
+    #     HOSTS="-R \"select["$EXCARG"]\""
+    #     echo "EXCLUDE="$HOSTS
+    # fi
 
-    RET=$(bsub $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*)
+    RET=$(bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*)
     echo RET=bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
     echo "#QRUN RET=" $RET
     echo
