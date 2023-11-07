@@ -21,6 +21,8 @@ function on_exit {
     rm -rf $TDIR
 }
 
+trap on_exit EXIT
+
 OUTPUT=$1
 GENOME_BWA=$2
 CLIPSEQ1=$3
@@ -40,10 +42,17 @@ else
     TDIR=/scratch/socci/PEMapper/$(uuid_short)
 fi
 
-echo TDIR=$TDIR | tee $LOG
-mkdir -vp $TDIR | tee -a $LOG
+hostname | tee $LOG
+echo TDIR=$TDIR | tee -a $LOG
+mkdir -vp $TDIR
 
-trap on_exit EXIT
+if [ "$?" != 0 ]; then
+    echo
+    echo FAILED TO CREATE TMPDIR $TDIR
+    echo
+    echo
+    exit 97
+fi
 
 bwa mem $BWA_OPTS -t $BWA_THREADS -H $VERSION $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \
     | picardV2 AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
