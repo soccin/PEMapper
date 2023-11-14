@@ -21,7 +21,7 @@ function usage {
     exit
 }
 
-BWA_OPTS=""
+BWA_OPTS="-M"
 SAMPLENAME="__NotDefined"
 while getopts "s:hgb:t:" opt; do
     case $opt in
