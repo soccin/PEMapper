@@ -28,12 +28,12 @@ mkdir -p $TDIR
 if [ "$BSUB" == "YES" ]; then
 
     bsub -o LSF.PIC/ -J PIC_${COMMAND}_$$ -R "rusage[mem=10]" -n 3 -W 359 \
-        $JAVA -Xmx23g -Djava.io.tmpdir=$TDIR \
+        $JAVA -Xmx23g -Djava.io.tmpdir=$TDIR -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 \
             -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
 
 else
 
-    $JAVA -Xmx23g -Djava.io.tmpdir=$TDIR \
+    $JAVA -Xmx23g -Djava.io.tmpdir=$TDIR -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 \
         -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
 
 fi
