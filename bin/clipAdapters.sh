@@ -32,7 +32,18 @@ fi
 # FASTQ1=$SCRATCH/tmp1_$$_.fastq
 # FASTQ2=$SCRATCH/tmp2_$$_.fastq
 
-cutadapt -O 10 -q 3 -m $MINLENGTH -e $ERROR \
-    -a $ADAPTER -A $ADAPTER \
-    -o ${BASE1}___CLIP.fastq -p ${BASE2}___CLIP.fastq \
-    $FASTQ1 $FASTQ2
+if [ "$NO_CLIP" == "Yes" ]; then
+
+    echo "NO_CLIP="$NO_CLIP >> $SCRATCH/NO_CLIP_ON
+
+    ln -s $FASTQ1 ${BASE1}___CLIP.fastq
+    ln -s $FASTQ2 ${BASE2}___CLIP.fastq
+
+else
+
+    cutadapt -O 10 -q 3 -m $MINLENGTH -e $ERROR \
+        -a $ADAPTER -A $ADAPTER \
+        -o ${BASE1}___CLIP.fastq -p ${BASE2}___CLIP.fastq \
+        $FASTQ1 $FASTQ2
+
+fi
