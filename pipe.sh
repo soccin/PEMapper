@@ -22,6 +22,8 @@ function usage {
 }
 
 BWA_OPTS="-M"
+#BWA_OPTS="-Y -K 100000000"
+
 SAMPLENAME="__NotDefined"
 while getopts "s:hgb:t:" opt; do
     case $opt in
@@ -201,7 +203,14 @@ INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
 
 BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
-OUTDIR=out___$BWATAG/$SAMPLENAME
+OUTDIR=out___$BWATAG
+if [ "$NO_CLIP" == "Yes" ]; then
+
+    OUTDIR=${OUTDIR}__NoClip
+
+fi
+
+OUTDIR=$OUTDIR/$SAMPLENAME
 mkdir -p $OUTDIR
 
 QRUN 4 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
