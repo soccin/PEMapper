@@ -21,8 +21,8 @@ function usage {
     exit
 }
 
-BWA_OPTS="-M"
-#BWA_OPTS="-Y -K 100000000"
+#BWA_OPTS="-M"
+BWA_OPTS="-Y -K 100000000"
 
 SAMPLENAME="__NotDefined"
 while getopts "s:hgb:t:" opt; do
@@ -58,6 +58,9 @@ fi
 
 BWA_OPTS=$(echo $BWA_OPTS | perl -pe "s/^\s+//")
 echo BWA_OPTS="["$BWA_OPTS"]"
+
+export NO_CLIP="Yes"
+echo "NO_CLIP="${NO_CLIP}
 
 GENOME=$1
 shift
