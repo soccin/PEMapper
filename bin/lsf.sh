@@ -112,7 +112,7 @@ QRUN () {
     #     echo "EXCLUDE="$HOSTS
     # fi
 
-    RET=$(bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*)
+    RET=$(bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ -R "fscratch" $*)
     echo RET=bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
     echo "#QRUN RET=" $RET
     echo
