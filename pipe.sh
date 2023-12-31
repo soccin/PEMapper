@@ -179,7 +179,7 @@ for FASTQ1 in $FASTQFILES; do
     #   shift 8
     #   BWA_OPTS="$@"
 
-    QRUN $((BWA_THREADS + 4)) ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 32 \
+    QRUN $((BWA_THREADS + 4)) ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 36 \
         mapBwaAndAddRG.sh \
             $SCRATCH/${BASE1%%.fastq*}.bam \
             $GENOME_BWA \
