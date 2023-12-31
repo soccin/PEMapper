@@ -38,14 +38,14 @@ QRUN () {
     case $LSF_VERSION in
         10.1)
             TIME_FLAG="-W"
-            TIME_SHORT="$TIME_FLAG 59"
+            TIME_SHORT="$TIME_FLAG 359"
             TIME_LONG="$TIME_FLAG 48:00"
 
         ;;
 
         34)
             TIME_FLAG="-W"
-            TIME_SHORT="$TIME_FLAG 59"
+            TIME_SHORT="$TIME_FLAG 359"
             TIME_LONG="$TIME_FLAG 48:00"
 
         ;;
@@ -76,13 +76,17 @@ QRUN () {
 
     VMEM=""
     if [ "$1" == "VMEM" ]; then
-        if [ "$LSF_VERSION" == "10.1" ]; then
+        if [ "$LSF_VERSION" != "9.1" ]; then
 
             TOTALMEM=$2
-            MEMPERSLOT=$((TOTALMEM / ALLOC))
+            MEMPERSLOT=$(echo $TOTALMEM $ALLOC | awk '{print int($1/$2+.9)}')
             VMEM='-R "rusage[mem='$MEMPERSLOT']"'
 
         else
+	    echo
+	    echo "This branch no longer works correctly"
+            echo
+            exit 1
             VMEM='-R "rusage[mem='$2']"'
         fi
 
