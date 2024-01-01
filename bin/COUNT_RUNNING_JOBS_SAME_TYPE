@@ -1,0 +1,1 @@
+ps -eo user,cmd | fgrep socci | fgrep -v grep | fgrep "picard.jar MergeSamFiles" | wc -l
