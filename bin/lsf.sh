@@ -38,14 +38,16 @@ QRUN () {
     case $LSF_VERSION in
         10.1)
             TIME_FLAG="-W"
-            TIME_SHORT="$TIME_FLAG 359"
+            TIME_SHORT="$TIME_FLAG 59"
+            TIME_MEDIUM="$TIME_FLAG 359"
             TIME_LONG="$TIME_FLAG 48:00"
 
         ;;
 
         34)
             TIME_FLAG="-W"
-            TIME_SHORT="$TIME_FLAG 359"
+            TIME_SHORT="$TIME_FLAG 59"
+            TIME_MEDIUM="$TIME_FLAG 359"
             TIME_LONG="$TIME_FLAG 48:00"
 
         ;;
@@ -101,6 +103,12 @@ QRUN () {
         echo LONG Job
     fi
 
+    if [ "$1" == "MEDIUM" ]; then
+        TIME=$TIME_MEDIUM
+        shift 1
+        echo MEDIUM Job
+    fi
+
     if [ "$LSF_TIME_OVERRIDE" != "" ]; then
         TIME="$TIME_FLAG $LSF_TIME_OVERRIDE"
         echo "Overriding LSF-TIME setting to ${TIME}"
@@ -116,7 +124,7 @@ QRUN () {
     #     echo "EXCLUDE="$HOSTS
     # fi
 
-    RET=$(bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*)
+    RET=$(bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -Q "EXCLUDE(9)" -J $QTAG -o $LSFDIR/ $*)
     echo RET=bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
     echo "#QRUN RET=" $RET
     echo
