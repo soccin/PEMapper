@@ -97,7 +97,7 @@ fi
 echo SAMPLENAME=$SAMPLENAME
 TAG=${TAG}_$$_$SAMPLENAME
 
-export SCRATCH=$(pwd)/_scratch/$(uuidgen -t)
+export SCRATCH=$(pwd)/_scratch/$(uuidgen | sed 's/.*-//')
 mkdir -p $SCRATCH
 echo SAMPLENAME=$SAMPLENAME >> $SCRATCH/RUNLOG
 echo BWA_OPTS=$BWA_OPTS >> $SCRATCH/RUNLOG
@@ -143,7 +143,11 @@ for FASTQ1 in $FASTQFILES; do
 
     BASE1=$(echo $FASTQ1 | tr '/' '_')
     BASE2=$(echo $FASTQ2 | tr '/' '_')
-    UUID=$(uuidgen)
+
+    #
+    # Shorter UUID string
+    #
+    export UUID=$(uuidgen | sed 's/.*-//')
 
     # if MINLENGTH not set in ENV then set to 1/2 read length
     if [ "$MINLENGTH" == "" ]; then
@@ -156,14 +160,16 @@ for FASTQ1 in $FASTQFILES; do
 
     fi
 
+    mkdir -p $SCRATCH/$UUID
+
     QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
         clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
-    CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
-    CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
+    CLIPSEQ1=$SCRATCH/$UUID/${BASE1}___CLIP.fastq
+    CLIPSEQ2=$SCRATCH/$UUID/${BASE2}___CLIP.fastq
 
     BWA_THREADS=8
 
-    echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" > $SCRATCH/${BASE1%%.fastq*}.version.txt
+    echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" > $SCRATCH/$UUID/${BASE1%%.fastq*}.version.txt
 
     #
     # mapBwaAndAddRG.sh
@@ -179,19 +185,19 @@ for FASTQ1 in $FASTQFILES; do
     #   shift 8
     #   BWA_OPTS="$@"
 
-    QRUN $((BWA_THREADS + 4)) ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 36 \
+    QRUN $((BWA_THREADS + 4)) ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 36 MEDIUM \
         mapBwaAndAddRG.sh \
-            $SCRATCH/${BASE1%%.fastq*}.bam \
+            $SCRATCH/$UUID/${BASE1%%.fastq*}.bam \
             $GENOME_BWA \
             $CLIPSEQ1 \
             $CLIPSEQ2 \
             $BASE1 \
             $SAMPLENAME \
-            $SCRATCH/${BASE1%%.fastq*}.version.txt \
+            $SCRATCH/$UUID/${BASE1%%.fastq*}.version.txt \
             $BWA_THREADS \
             $BWA_OPTS
 
-    BAMFILES="$BAMFILES $SCRATCH/${BASE1%%.fastq*}.bam"
+    BAMFILES="$BAMFILES $SCRATCH/$UUID/${BASE1%%.fastq*}.bam"
 
 done
 
@@ -203,6 +209,7 @@ echo HOLDTAG="${TAG}_MAP_*" >> $SCRATCH/RUNLOG
 echo
 
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
+NINPUTS=$(echo $BAMFILES | tr ' ' '\n' | wc -l | awk '{print $1}')
 
 BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
@@ -216,9 +223,15 @@ fi
 OUTDIR=$OUTDIR/$SAMPLENAME
 mkdir -p $OUTDIR
 
-QRUN 13 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 40 LONG \
-    mergeSamFiles.sh $OUTDIR/${SAMPLENAME}.bam $INPUTS
+NCORES=$(echo $NINPUTS | awk '$1/3<13{print 13}$1/3>13{print int($1/3+.9)}')
+echo
+echo "SAMPLE="$SAMPLENAME
+echo "NINPUTS="$NINPUTS
+echo "NCORES="$NCORES
+echo
 
+QRUN $NCORES ${TAG}__04__MERGE HOLD "${TAG}_MAP_*" VMEM 40 LONG \
+    mergeSamFiles.sh $OUTDIR/${SAMPLENAME}.bam $INPUTS
 
 QRUN 2 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 36 LONG \
     picard.local CollectAlignmentSummaryMetrics \
