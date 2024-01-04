@@ -21,6 +21,12 @@ function on_exit {
     rm -rf $TDIR
 }
 
+NUM_JOBS_THIS_CLASS=$(ps -eo user,cmd | fgrep socci | fgrep -v grep | fgrep "mapBwaAndAddRG.sh" | wc -l)
+
+echo
+echo \$NUM_JOBS_THIS_CLASS"[mapBwaAndAddRG]"=$NUM_JOBS_THIS_CLASS
+echo
+
 trap on_exit EXIT
 
 OUTPUT=$1
