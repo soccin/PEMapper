@@ -10,8 +10,8 @@ SNAME=$(basename $0)
 ADAPTER=$1
 FASTQ1=$2
 FASTQ2=$3
-BASE1=$SCRATCH/$(echo $FASTQ1 | tr '/' '_')
-BASE2=$SCRATCH/$(echo $FASTQ2 | tr '/' '_')
+BASE1=$SCRATCH/$UUID/$(echo $FASTQ1 | tr '/' '_')
+BASE2=$SCRATCH/$UUID/$(echo $FASTQ2 | tr '/' '_')
 
 if [ "$MINLENGTH" == "" ]; then
     MINLENGTH=35
