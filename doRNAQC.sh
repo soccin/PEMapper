@@ -3,6 +3,8 @@
 BAM=$1
 BUILD=$(~/Code/Gist/getGenomeBuild.sh $BAM)
 
+echo \$LSF_VERSION="[$LSF_VERSION]"
+
 if [ "$LSF_VERSION" == "" ]; then
         export LSF_VERSION=$(echo $LSF_SERVERDIR | perl -ne 'm|/([^/]+)/linux|;print $1')
         echo setting LSF_VERSION="$LSF_VERSION"
@@ -14,6 +16,12 @@ case $LSF_VERSION in
             TIME_SHORT="$TIME_FLAG 59"
             TIME_LONG="$TIME_FLAG 359"
 
+        ;;
+
+        34)
+            TIME_FLAG="-W"
+            TIME_SHORT="$TIME_FLAG 59"
+            TIME_LONG="$TIME_FLAG 359"
         ;;
 
         9.1)
@@ -28,6 +36,7 @@ case $LSF_VERSION in
         ;;
 
 esac
+
 
 STRAND_DB=/home/socci/Work/Strand/db
 
