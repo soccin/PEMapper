@@ -57,6 +57,10 @@ case $BUILD in
     REFFLAT=$STRAND_DB/refflat_dm3.txt.gz
     ;;
 
+    WBcel235)
+    REFFLAT=$STRAND_DB/refFlat__WBcel235.txt.gz
+    ;;
+
     *)
     echo "UNKNOWN BUILD = "$BUILD
     exit 1
