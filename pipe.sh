@@ -109,7 +109,7 @@ BWA_VERSION=$(bwa 2>&1 | fgrep Version | awk '{print $2}')
 JOBS=""
 BAMFILES=""
 
-FASTQFILES=$(find -L $SAMPLEDIRS -name "*[_.]R1*.fastq.gz")
+FASTQFILES=$(find -L $SAMPLEDIRS -name "*[_.]R1*.fastq.gz" -o -name "*[_.]R1*.fq.gz")
 echo "FASTQFILES="$FASTQFILES
 
 if [ "$FASTQFILES" == "" ]; then
@@ -128,6 +128,10 @@ for FASTQ1 in $FASTQFILES; do
 		*.R1.*)
 		FASTQ2=${FASTQ1/.R1./.R2.}
 		;;
+
+        *_R1.*)
+        FASTQ2=${FASTQ1/_R1./_R2.}
+        ;;
 
 		*)
 		echo
