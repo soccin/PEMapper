@@ -1,10 +1,14 @@
 # PEMapper
 
-## master (2023-11-14)
+## branch: master (jurassic)
 
-- MAJOR CHANGE: `bwa -M` no on by default
+This branch is not for the non-lsf JUNO nodes
 
-- `runPEMapperMultiDirectories.sh` no limits number of bsubs
+## CHANGES
+
+- MAJOR CHANGE: `bwa -M` now on by default
+
+- `runPEMapperMultiDirectories.sh` now limits number of bsubs
 
 - Now using system cutadapt
 
