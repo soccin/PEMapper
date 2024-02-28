@@ -2,7 +2,7 @@
 
 ## master (2023-11-14)
 
-- MAJOR CHANGE: `bwa -M` no on by default
+- MAJOR CHANGE: `bwa -M` now on by default
 
 - `runPEMapperMultiDirectories.sh` no limits number of bsubs
 
