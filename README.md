@@ -1,10 +1,14 @@
 # PEMapper
 
-## master (2023-11-14)
+## branch: Triassic (2024-02-28)
 
-- MAJOR CHANGE: `bwa -M` no on by default
+This branch is for the old JUNO/GPFS LSF system
 
-- `runPEMapperMultiDirectories.sh` no limits number of bsubs
+## CHANGES
+
+- MAJOR CHANGE: `bwa -M` now on by default
+
+- `runPEMapperMultiDirectories.sh` now limits number of bsubs
 
 - Now using system cutadapt
 
