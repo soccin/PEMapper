@@ -1,8 +1,8 @@
 # PEMapper
 
-## branch: master (jurassic)
+## branch: jurassic
 
-This branch is not for the non-lsf JUNO nodes
+This branch is for the non-lsf JUNO nodes
 
 ## CHANGES
 
