@@ -1,5 +1,6 @@
 QSYNC=#
 
+SDIR="$( cd "$( dirname "$0" )" && pwd )"
 
 ##
 # QRUN ALLOC QTAG <HOLD hold_id> <VMEM size> LONG
@@ -80,7 +81,7 @@ QRUN () {
 
             TOTALMEM=$2
             MEMPERSLOT=$((TOTALMEM / ALLOC))
-            VMEM='-R "rusage[mem='$MEMPERSLOT']"'
+            VMEM='-R rusage[mem='$MEMPERSLOT']'
 
         else
             VMEM='-R "rusage[mem='$2']"'
@@ -112,8 +113,12 @@ QRUN () {
     #     echo "EXCLUDE="$HOSTS
     # fi
 
-    RET=$(bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*)
-    echo RET=bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
+
+    #HOSTS='-R "rusage[select!='lt06']"'
+
+    RET=$($SDIR/bin/bsub.sh $TIME $QHOLD -n $ALLOC -J $QTAG -o $LSFDIR/ $VMEM $*)
+
+    echo RET=bsub $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
     echo "#QRUN RET=" $RET
     echo
     JOBID=$(echo $RET | perl -ne '/Job <(\d+)> /;print $1')
