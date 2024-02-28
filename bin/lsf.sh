@@ -30,23 +30,23 @@ QRUN () {
     LSFDIR=LSF.PEMAP/$D2/$D1/$$
     mkdir -p $LSFDIR
 
-    if [ "$LSF_VERSION" == "" ]; then
+    #if [ "$LSF_VERSION" == "" ]; then
         export LSF_VERSION=$(echo $LSF_SERVERDIR | perl -ne 'm|/([^/]+)/linux|;print $1')
         echo setting LSF_VERSION="$LSF_VERSION"
-    fi
+    #fi
 
     case $LSF_VERSION in
         10.1)
             TIME_FLAG="-W"
-            TIME_SHORT="$TIME_FLAG 359"
-            TIME_LONG="$TIME_FLAG 48:00"
+            TIME_SHORT="$TIME_FLAG 59"
+            TIME_LONG="$TIME_FLAG 359"
 
         ;;
 
         34)
             TIME_FLAG="-W"
-            TIME_SHORT="$TIME_FLAG 359"
-            TIME_LONG="$TIME_FLAG 48:00"
+            TIME_SHORT="$TIME_FLAG 59"
+            TIME_LONG="$TIME_FLAG 359"
 
         ;;
 
