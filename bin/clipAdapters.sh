@@ -1,6 +1,7 @@
 #!/bin/bash
 
 SNAME=$(basename $0)
+SDIR="$( cd "$( dirname "$0" )" && pwd )"
 
 # -e .2 (20%) error
 # For len 13 adapter (Maximal HiSeq Default)
@@ -32,7 +33,11 @@ fi
 # FASTQ1=$SCRATCH/tmp1_$$_.fastq
 # FASTQ2=$SCRATCH/tmp2_$$_.fastq
 
+. $SDIR/venv/bin/activate
+
 cutadapt -O 10 -q 3 -m $MINLENGTH -e $ERROR \
     -a $ADAPTER -A $ADAPTER \
     -o ${BASE1}___CLIP.fastq -p ${BASE2}___CLIP.fastq \
     $FASTQ1 $FASTQ2
+
+deactivate

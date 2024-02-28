@@ -1,0 +1,4 @@
+~/.local/bin/virtualenv venv
+. venv/bin/activate
+pip install --upgrade pip
+pip install cutadapt
