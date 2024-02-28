@@ -1,6 +1,8 @@
 #!/bin/bash
-JAVA=/opt/common/CentOS_6/java/jdk1.8.0_31/bin/java
-PICARDJAR=/home/socci/Code/Picard/jar/picard.jar
+
+module load java/1.8.0_31
+JAVA=/opt/common/CentOS_7/java/1.8.0_31/bin/java
+PICARDJAR=/lila/home/socci/Code/Picard/jar/2.25.5/picard.jar
 
 COMMAND=$1
 shift 1

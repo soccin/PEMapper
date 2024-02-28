@@ -1,7 +1,8 @@
 #!/bin/bash
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
 
-JAVA=/opt/common/CentOS_6/java/jdk1.8.0_31/bin/java
+module load java/1.8.0_31
+JAVA=/opt/common/CentOS_7/java/1.8.0_31/bin/java
 PICARDJAR=$SDIR/jar/picard.jar
 
 COMMAND=$1
