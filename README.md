@@ -1,6 +1,10 @@
 # PEMapper
 
-## master (2023-11-14)
+## BRANCH: lilac (2024-02-28)
+
+Version to work on LILAC LSF
+
+## CHANGES
 
 - MAJOR CHANGE: `bwa -M` now on by default
 
