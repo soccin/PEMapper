@@ -183,8 +183,20 @@ INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
 
 BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
+#
+# Create output folder
+#
 OUTDIR=out___$BWATAG
+
+if [ "$NO_CLIP" == "Yes" ]; then
+
+    OUTDIR=${OUTDIR}__NoClip
+
+fi
+
+OUTDIR=$OUTDIR/$SAMPLENAME
 mkdir -p $OUTDIR
+
 QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
