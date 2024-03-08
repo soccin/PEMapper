@@ -1,6 +1,7 @@
 #!/bin/bash
 
 SNAME=$(basename $0)
+SDIR="$( cd "$( dirname "$0" )" && pwd )"
 
 # -e .2 (20%) error
 # For len 13 adapter (Maximal HiSeq Default)
@@ -27,12 +28,16 @@ fi
 # Debug limit
 # Added $$ to name so no collisions with multiple jobs
 #
-# zcat $FASTQ1 | head -40000 >$SCRATCH/tmp1_$$_.fastq
-# zcat $FASTQ2 | head -40000 >$SCRATCH/tmp2_$$_.fastq
+# zcat $FASTQ1 | head -4000000 >$SCRATCH/tmp1_$$_.fastq
+# zcat $FASTQ2 | head -4000000 >$SCRATCH/tmp2_$$_.fastq
 # FASTQ1=$SCRATCH/tmp1_$$_.fastq
 # FASTQ2=$SCRATCH/tmp2_$$_.fastq
+
+. $SDIR/venv/bin/activate
 
 cutadapt -O 10 -q 3 -m $MINLENGTH -e $ERROR \
     -a $ADAPTER -A $ADAPTER \
     -o ${BASE1}___CLIP.fastq -p ${BASE2}___CLIP.fastq \
     $FASTQ1 $FASTQ2
+
+deactivate
