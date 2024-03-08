@@ -1,6 +1,9 @@
 #!/bin/bash
-JAVA=/opt/common/CentOS_6/java/jdk1.8.0_31/bin/java
-PICARDJAR=/home/socci/Code/Picard/jar/picard.jar
+
+SDIR="$( cd "$( dirname "$0" )" && pwd )"
+
+PICARDJAR=$SDIR/jar/picard.jar
+JAVA=java
 
 COMMAND=$1
 shift 1
