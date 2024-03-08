@@ -30,10 +30,7 @@ QRUN () {
     LSFDIR=LSF.PEMAP/$D2/$D1/$$
     mkdir -p $LSFDIR
 
-    if [ "$LSF_VERSION" == "" ]; then
-        export LSF_VERSION=$(echo $LSF_SERVERDIR | perl -ne 'm|/([^/]+)/linux|;print $1')
-        echo setting LSF_VERSION="$LSF_VERSION"
-    fi
+    LSF_VERSION=10.1
 
     case $LSF_VERSION in
         10.1)
@@ -112,10 +109,13 @@ QRUN () {
     #     echo "EXCLUDE="$HOSTS
     # fi
 
-    RET=$(bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*)
-    echo RET=bsub $HOSTS $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
-    echo "#QRUN RET=" $RET
-    echo
-    JOBID=$(echo $RET | perl -ne '/Job <(\d+)> /;print $1')
+    CMD=$1
+    shift 1
+    $CMD $* 2>&1 | tee $LSFDIR/log_${CMD}
+    echo $CMD $*
+
+    # RET=$($*)
+    # echo $*
+    # echo $RET
 
 }
