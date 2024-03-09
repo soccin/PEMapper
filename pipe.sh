@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -euo pipefail
+
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
 export PATH=$SDIR/bin:$PATH
 source $SDIR/bin/lsf.sh
@@ -160,7 +163,7 @@ for FASTQ1 in $FASTQFILES; do
     echo
     echo
 
-    BWA_THREADS=8
+    BWA_THREADS=16
 
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 GENOME=$1
 F1=$2
 F2=$3

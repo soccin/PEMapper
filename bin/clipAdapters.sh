@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 SNAME=$(basename $0)
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
 
@@ -28,10 +30,10 @@ fi
 # Debug limit
 # Added $$ to name so no collisions with multiple jobs
 #
-# zcat $FASTQ1 | head -4000000 >$SCRATCH/tmp1_$$_.fastq
-# zcat $FASTQ2 | head -4000000 >$SCRATCH/tmp2_$$_.fastq
-# FASTQ1=$SCRATCH/tmp1_$$_.fastq
-# FASTQ2=$SCRATCH/tmp2_$$_.fastq
+zcat $FASTQ1 | head -4000000 >$SCRATCH/tmp1_$$_.fastq
+zcat $FASTQ2 | head -4000000 >$SCRATCH/tmp2_$$_.fastq
+FASTQ1=$SCRATCH/tmp1_$$_.fastq
+FASTQ2=$SCRATCH/tmp2_$$_.fastq
 
 . $SDIR/venv/bin/activate
 
