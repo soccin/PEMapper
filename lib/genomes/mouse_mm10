@@ -1,0 +1,2 @@
+GENOME_FASTA=/rtsess01/compute/juno/bic/juno/depot/assemblies/M.musculus/mm10/mm10.fasta
+GENOME_BWA=/rtsess01/compute/juno/bic/juno/depot/assemblies/M.musculus/mm10/index/bwa/0.7.12/mm10.fasta
