@@ -1,3 +1,5 @@
-GENOME_FASTA=/juno/depot/assemblies/H.sapiens/b37/index/bwa/0.7.12/b37.fasta
-GENOME_BWA=/juno/depot/assemblies/H.sapiens/b37/index/bwa/0.7.12/b37.fasta
-DBSNP=/juno/depot/resources/gatk/bundle/2.8/b37/dbsnp_138.b37.vcf
+DEPOT=/data/bicgrp/share/depot
+
+GENOME_FASTA=$DEPOT/assemblies/H.sapiens/b37/index/bwa/0.7.12/b37.fasta
+GENOME_BWA=$DEPOT/assemblies/H.sapiens/b37/index/bwa/0.7.12/b37.fasta
+#DBSNP=$DEPOT/resources/gatk/bundle/2.8/b37/dbsnp_138.b37.vcf

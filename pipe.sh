@@ -1,5 +1,12 @@
 #!/bin/bash
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
+
+if [ ! -e $SDIR/bin/venv/bin/activate ]; then
+    echo -e "\n   Need to install venv"
+    echo -e "   Run \`mkVenv\` in bin folder\n"
+    exit 1
+fi
+
 export PATH=$SDIR/bin:$PATH
 source $SDIR/bin/lsf.sh
 
@@ -183,8 +190,20 @@ INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
 
 BWATAG=$(echo $BWA_OPTS | perl -pe 's/-//g' | tr ' ' '_')
 
+#
+# Create output folder
+#
 OUTDIR=out___$BWATAG
+
+if [ "$NO_CLIP" == "Yes" ]; then
+
+    OUTDIR=${OUTDIR}__NoClip
+
+fi
+
+OUTDIR=$OUTDIR/$SAMPLENAME
 mkdir -p $OUTDIR
+
 QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
@@ -196,7 +215,7 @@ QRUN 2 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     LEVEL=null LEVEL=SAMPLE
 
 QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picard.local CollectInsertSizeMetrics \
+    picardV2 CollectInsertSizeMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___INS.txt \
 	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
@@ -208,10 +227,10 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
 #     S=$OUTDIR/${SAMPLENAME}___GCBsummary.txt \
 #     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
-    picard.local CollectWgsMetrics \
-    I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
-    R=$GENOME_FASTA
+# QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+#     picard.local CollectWgsMetrics \
+#     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
+#     R=$GENOME_FASTA
 
 QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picardV2 MarkDuplicates USE_JDK_INFLATER=TRUE USE_JDK_DEFLATER=TRUE \
@@ -239,8 +258,9 @@ QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
 QRUN 1 ${TAG}__06__POST HOLD "${TAG}__05__STATS*" \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
-QRUN 1 ${TAG}__07_CLEANUP HOLD ${TAG}__06__POST \
+QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__04__MERGE \
     rm -rf $SCRATCH
 
-#$OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
+QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__06__POST \
+    rm -rf $OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
 

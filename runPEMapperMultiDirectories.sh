@@ -1,6 +1,13 @@
 #!/bin/bash
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
 
+if [ ! -e $SDIR/bin/venv/bin/activate ]; then
+    echo -e "\n   Need to install venv"
+    echo -e "   Run \`mkVenv\` in bin folder\n"
+    exit 1
+fi
+
+
 TAG=qPEMAP
 while getopts "t:" opt; do
     case $opt in
