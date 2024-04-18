@@ -1,10 +1,5 @@
 #!/bin/bash
 
-#
-# This stuff is now handled with the
-# BSUBRC stuff in the ~/bin/bsub
-# script
-#
 #echo bsub -R "select[hname!=lt06]" $*
 
-bsub $*
+/admin/lsfjuno/lsf/10.1/linux3.10-glibc2.17-x86_64/bin/bsub $@
