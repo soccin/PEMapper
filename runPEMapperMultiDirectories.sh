@@ -1,6 +1,13 @@
 #!/bin/bash
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
 
+if [ ! -e $SDIR/bin/venv/bin/activate ]; then
+    echo -e "\n   Need to install venv"
+    echo -e "   Run \`mkVenv\` in bin folder\n"
+    exit 1
+fi
+
+
 TAG=qPEMAP
 while getopts "t:" opt; do
     case $opt in
@@ -26,7 +33,7 @@ MAPPING=$2
 for sample in $(cat $MAPPING | cut -f2 | sort | uniq); do
 
     NUMJOBS=$(bjobs | wc -l);
-    while [ $NUMJOBS -gt 500 ]; do
+    while [ $NUMJOBS -gt 2000 ]; do
         date
         echo NUMJOBS=$NUMJOBS;
         NUMJOBS=$(bjobs | wc -l);
