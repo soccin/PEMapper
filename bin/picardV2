@@ -1,8 +1,8 @@
 #!/bin/bash
 
-module load java/1.8.0_31
-JAVA=/opt/common/CentOS_7/java/1.8.0_31/bin/java
-PICARDJAR=/lila/home/socci/Code/Picard/jar/2.25.5/picard.jar
+SDIR="$( cd "$( dirname "$0" )" && pwd )"
+
+PICARDJAR=$SDIR/jar/picard.jar
 
 COMMAND=$1
 shift 1
@@ -30,12 +30,12 @@ mkdir -p $TDIR
 if [ "$BSUB" == "YES" ]; then
 
     bsub -o LSF.PIC/ -J PIC_${COMMAND}_$$ -R "rusage[mem=10]" -n 3 -W 359 \
-        $JAVA -Xmx23g -Djava.io.tmpdir=$TDIR -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 \
+        java -Xmx23g -Djava.io.tmpdir=$TDIR -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 \
             -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
 
 else
 
-    $JAVA -Xmx23g -Djava.io.tmpdir=$TDIR -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 \
+    java -Xmx23g -Djava.io.tmpdir=$TDIR -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 \
         -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
 
 fi
