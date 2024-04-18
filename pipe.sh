@@ -1,5 +1,12 @@
 #!/bin/bash
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
+
+if [ ! -e $SDIR/bin/venv/bin/activate ]; then
+    echo -e "\n   Need to install venv"
+    echo -e "   Run \`mkVenv\` in bin folder\n"
+    exit 1
+fi
+
 export PATH=$SDIR/bin:$PATH
 source $SDIR/bin/lsf.sh
 
