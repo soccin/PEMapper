@@ -73,7 +73,9 @@ QRUN () {
         echo LONG Job
     fi
 
-    RET=$(bsub $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*)
+    BSUB=/admin/lsfjuno/lsf/10.1/linux3.10-glibc2.17-x86_64/bin/bsub
+
+    RET=$($BSUB $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*)
     echo RET=bsub $QHOLD $VMEM -n $ALLOC -J $QTAG -o LSF.PEMAP/ $*
     echo "#QRUN RET=" $RET
     echo
