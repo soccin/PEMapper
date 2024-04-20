@@ -40,7 +40,7 @@ case $LSF_VERSION in
 esac
 
 
-STRAND_DB=$SDIR/../Strand/db
+STRAND_DB=$SDIR/../db
 
 case $BUILD in
     mm10)
