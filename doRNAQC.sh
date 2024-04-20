@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SDIR="$( cd "$( dirname "$0" )" && pwd )"
+
 BAM=$1
 BUILD=$(~/Code/Gist/getGenomeBuild.sh $BAM)
 
@@ -38,7 +40,7 @@ case $LSF_VERSION in
 esac
 
 
-STRAND_DB=/home/socci/Work/Strand/db
+STRAND_DB=$SDIR/../Strand/db
 
 case $BUILD in
     mm10)
