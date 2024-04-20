@@ -68,12 +68,12 @@ esac
 
 bsub -o LSF/ -J PIC.RNA $TIME_SHORT -R "rusage[mem=36]" \
 picard.local CollectRnaSeqMetrics I=$BAM \
-    O=$(basename $BAM | sed 's/.bam/___RNAStats_FRTS.txt/') \
+    O=$(basename $BAM | sed 's/.bam/___RNAStats_FRTS__Forward.txt/') \
     STRAND=FIRST_READ_TRANSCRIPTION_STRAND \
     REF_FLAT=$REFFLAT
 
 bsub -o LSF/ -J PIC.RNA $TIME_SHORT -R "rusage[mem=36]" \
 picard.local CollectRnaSeqMetrics I=$BAM \
-    O=$(basename $BAM | sed 's/.bam/___RNAStats_SRTS.txt/') \
+    O=$(basename $BAM | sed 's/.bam/___RNAStats_SRTS__Reverse.txt/') \
     STRAND=SECOND_READ_TRANSCRIPTION_STRAND \
     REF_FLAT=$REFFLAT
