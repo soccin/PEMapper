@@ -1,2 +1,2 @@
-GENOME_FASTA=/juno/depot/assemblies/H.sapiens/hg19/index/bwa/0.7.4-r385/hg19.fasta
-GENOME_BWA=/juno/depot/assemblies/H.sapiens/hg19/index/bwa/0.7.4-r385/hg19.fasta
+GENOME_FASTA=/juno/bic/depot/assemblies/H.sapiens/hg19/index/bwa/0.7.4-r385/hg19.fasta
+GENOME_BWA=/juno/bic/depot/assemblies/H.sapiens/hg19/index/bwa/0.7.4-r385/hg19.fasta

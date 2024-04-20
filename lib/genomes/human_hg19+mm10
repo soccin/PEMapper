@@ -1,2 +1,2 @@
-GENOME_FASTA=/juno/depot/assemblies/hybrids/H.sapiens_M.musculus/hg19_mm10/index/bwa/0.7.8/hg19_mm10.fasta
-GENOME_BWA=/juno/depot/assemblies/hybrids/H.sapiens_M.musculus/hg19_mm10/index/bwa/0.7.8/hg19_mm10.fasta
+GENOME_FASTA=/juno/bic/depot/assemblies/hybrids/H.sapiens_M.musculus/hg19_mm10/index/bwa/0.7.8/hg19_mm10.fasta
+GENOME_BWA=/juno/bic/depot/assemblies/hybrids/H.sapiens_M.musculus/hg19_mm10/index/bwa/0.7.8/hg19_mm10.fasta
