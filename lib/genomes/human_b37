@@ -1,4 +1,4 @@
-DEPOT=/data/bicgrp/share/depot
+DEPOT=/juno/bic/depot
 
 GENOME_FASTA=$DEPOT/assemblies/H.sapiens/b37/index/bwa/0.7.12/b37.fasta
 GENOME_BWA=$DEPOT/assemblies/H.sapiens/b37/index/bwa/0.7.12/b37.fasta
