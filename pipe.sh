@@ -29,6 +29,7 @@ function usage {
 }
 
 BWA_OPTS="-M"
+export NO_CLIP="Yes"
 SAMPLENAME="__NotDefined"
 while getopts "s:hgb:t:" opt; do
     case $opt in
@@ -171,7 +172,8 @@ for FASTQ1 in $FASTQFILES; do
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
-        picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
+        picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 \
+        SO=unsorted \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
 
@@ -205,8 +207,10 @@ OUTDIR=$OUTDIR/$SAMPLENAME
 mkdir -p $OUTDIR
 
 QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
-    picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
-    O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
+    picard.local MergeSamFiles SO=unsorted \
+    O=$OUTDIR/${SAMPLENAME}.sam $INPUTS
+
+exit
 
 QRUN 2 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local CollectAlignmentSummaryMetrics \

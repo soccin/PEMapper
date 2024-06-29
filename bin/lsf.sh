@@ -116,9 +116,9 @@ QRUN () {
 
     #HOSTS='-R "rusage[select!='lt06']"'
 
-    RET=$($SDIR/bin/bsub.sh $TIME $QHOLD -n $ALLOC -J $QTAG -o $LSFDIR/ $VMEM $*)
+    RET=$($SDIR/bin/bsub.sh -R cmorsc1 $TIME $QHOLD -n $ALLOC -J $QTAG -o $LSFDIR/ $VMEM $*)
 
-    echo RET=bsub $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
+    echo RET=bsub -R cmorsc1 $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
     echo "#QRUN RET=" $RET
     echo
     JOBID=$(echo $RET | perl -ne '/Job <(\d+)> /;print $1')

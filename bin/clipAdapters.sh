@@ -43,6 +43,10 @@ if [ "$NO_CLIP" == "Yes" ]; then
 
 else
 
+    echo "BROKEN"
+    exit 1
+
+
     . $SDIR/venv/bin/activate
 
     cutadapt -O 10 -q 3 -m $MINLENGTH -e $ERROR \
