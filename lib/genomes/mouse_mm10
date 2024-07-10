@@ -1,0 +1,4 @@
+DEPOT=/juno/bic/depot
+
+GENOME_FASTA=$DEPOT/assemblies/M.musculus/mm10/index/bwa/0.7.12/mm10.fasta
+GENOME_BWA=$DEPOT/assemblies/M.musculus/mm10/index/bwa/0.7.12/mm10.fasta
