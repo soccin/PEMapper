@@ -158,19 +158,19 @@ for FASTQ1 in $FASTQFILES; do
 
     fi
 
-    QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
+    QRUN 3 ${TAG}_MAP_01__$UUID VMEM 5 \
         clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
     CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
     CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
 
-    BWA_THREADS=8
+    BWA_THREADS=16
 
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
     QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 32 \
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
+    QRUN 5 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
         picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
@@ -204,17 +204,17 @@ fi
 OUTDIR=$OUTDIR/$SAMPLENAME
 mkdir -p $OUTDIR
 
-QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
+QRUN 5 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
 
-QRUN 2 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+QRUN 3 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picard.local CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA \
     LEVEL=null LEVEL=SAMPLE
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+QRUN 3 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picardV2 CollectInsertSizeMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___INS.txt \
 	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
@@ -232,7 +232,7 @@ QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
 #     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
 #     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+QRUN 5 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
     picardV2 MarkDuplicates USE_JDK_INFLATER=TRUE USE_JDK_DEFLATER=TRUE \
     I=$OUTDIR/${SAMPLENAME}.bam \
     O=$OUTDIR/${SAMPLENAME}___MD.bam \
