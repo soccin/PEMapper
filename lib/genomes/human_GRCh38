@@ -1,4 +1,4 @@
-GENOME_DIR=/juno/depot/assemblies/H.sapiens/GRCh38_GDC
+GENOME_DIR=/juno/bic/depot/assemblies/H.sapiens/GRCh38_GDC
 GENOME_FASTA=$GENOME_DIR/GRCh38.d1.vd1.fa
 GENOME_BWA=$GENOME_DIR/index/bwa/0.7.17/GRCh38.d1.vd1.fa
 #DBSNP=/juno/depot/resources/gatk/bundle/2.8/b37/dbsnp_138.b37.vcf
