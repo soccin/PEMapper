@@ -20,6 +20,7 @@ if [ "$MINLENGTH" == "" ]; then
     echo $SNAME Default MINLENGTH=$MINLENGTH set
 fi
 
+ERROR=""
 if [ "$ERROR" == "" ]; then
     ERROR=0.1
     echo $SNAME Default ERROR=$ERROR set
