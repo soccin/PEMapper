@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 INPUT=$1
 OUTPUT=$2
 SAMPLENAME=$3

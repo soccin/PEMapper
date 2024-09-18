@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 SNAME=$(basename $0)
 
 # -e .2 (20%) error

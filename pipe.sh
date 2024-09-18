@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -euo pipefail
+
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
 export PATH=$SDIR/bin:$PATH
 source $SDIR/bin/lsf.sh

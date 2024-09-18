@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 BAM=$1
 BUILD=$(~/Code/Gist/getGenomeBuild.sh $BAM)
 

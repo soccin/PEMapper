@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -euo pipefail
+
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
 
 JAVA=/opt/common/CentOS_6/java/jdk1.8.0_31/bin/java
