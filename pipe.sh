@@ -5,6 +5,7 @@ set -euo pipefail
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
 export PATH=$SDIR/bin:$PATH
 source $SDIR/bin/lsf.sh
+module load samtools/1.19.2
 
 SCRIPT_VERSION=$(git --git-dir=$SDIR/.git --work-tree=$SDIR describe --always --long)
 PIPENAME="PEMapper"
