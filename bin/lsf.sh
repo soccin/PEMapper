@@ -102,8 +102,8 @@ QRUN () {
         echo "EXCLUDE="$HOSTS
     fi
 
-    RET=$(bsub -R "fscratch" $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*)
-    echo RET=bsub $HOSTS -R "fscratch" $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
+    RET=$(bsub $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*)
+    echo RET=bsub $TIME $QHOLD $VMEM -n $ALLOC -J $QTAG -o $LSFDIR/ $*
     echo "#QRUN RET=" $RET
     echo
     JOBID=$(echo $RET | perl -ne '/Job <(\d+)> /;print $1')
