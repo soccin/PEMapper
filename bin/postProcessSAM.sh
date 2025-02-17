@@ -7,13 +7,13 @@ OUTPUT=$2
 SAMPLENAME=$3
 PU=$4
 
-TDIR=/fscratch/socci/PEMapper/$(uuidgen)
-mkdir -vp $TDIR
-if [ ! -e $TDIR ]; then
-    echo no fscratch, using scratch;
-    TDIR=/scratch/socci/PEMapper/$(uuidgen)
-    mkdir -vp $TDIR
+TDIR=/scratch/socci
+if [ -e /fscratch/socci ]; then
+    TDIR=/fscratch/socci
 fi
+TDIR=$TDIR/PEMapper/$(uuidgen)
+
+mkdir -vp $TDIR
 
 TBAM=$TDIR/$(basename $INPUT)
 
