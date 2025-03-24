@@ -263,9 +263,9 @@ QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
 QRUN 1 ${TAG}__06__POST HOLD "${TAG}__05__STATS*" \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
-# QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__04__MERGE \
-#     rm -rf $SCRATCH
+QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__04__MERGE \
+     rm -rf $SCRATCH
 
-# QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__05__MD \
-#     rm -rf $OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
+QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__05__MD \
+     rm -rf $OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
 
