@@ -116,7 +116,7 @@ BWA_VERSION=$(bwa 2>&1 | fgrep Version | awk '{print $2}')
 JOBS=""
 BAMFILES=""
 
-FASTQFILES=$(find -L $SAMPLEDIRS -name "*[_.]R1*.fastq.gz")
+FASTQFILES=$(find -L $SAMPLEDIRS -name "*[_.]R1[_.]*.fastq.gz")
 echo "FASTQFILES="$FASTQFILES
 
 if [ "$FASTQFILES" == "" ]; then
@@ -129,12 +129,17 @@ for FASTQ1 in $FASTQFILES; do
 
 	case "$FASTQ1" in
 		*_R1_*)
-		FASTQ2=${FASTQ1/_R1_/_R2_}
+        R1TAG=$(echo $FASTQ1 | perl -ne 'm/(_R1_\d+.fastq.gz)$/; print $1')
+        FASTQ2=$(echo $FASTQ1 | sed "s/$R1TAG/${R1TAG/_R1_/_R2_}/")
+        if [ ! -e "$FASTQ2" ]; then
+            echo -e "\n\n   FATAL ERROR in R1=>R2 rename\n\n"
+            exit -1
+        fi
 		;;
 
-		*.R1.*)
-		FASTQ2=${FASTQ1/.R1./.R2.}
-		;;
+		# *.R1.*)
+		# FASTQ2=${FASTQ1/.R1./.R2.}
+		# ;;
 
 		*)
 		echo
@@ -258,9 +263,9 @@ QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
 QRUN 1 ${TAG}__06__POST HOLD "${TAG}__05__STATS*" \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
-QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__04__MERGE \
-    rm -rf $SCRATCH
+# QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__04__MERGE \
+#     rm -rf $SCRATCH
 
-QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__05__MD \
-    rm -rf $OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
+# QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__05__MD \
+#     rm -rf $OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
 
