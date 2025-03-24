@@ -129,6 +129,19 @@ for FASTQ1 in $FASTQFILES; do
 
 	case "$FASTQ1" in
 		*_R1_*)
+        #
+        # The old coded failed if the sample name had `R1_` in it.
+        # This version makes sure we only replace the _R1_ at the
+        # end of the filename, and not any R1 in the sample name
+        # part.
+        # For example, if the fastq filename was:
+        #
+        #   .../Sample_R1_FP_IGO_16991_1/R1_FP_IGO_16991_1_S1_L001_R1_001.fastq.gz
+        #
+        # note the R1 in the sample name in the standard Illumina bcl2fastq output
+        # would be replaced: Sample_R1_FP_IGO_16991_1 => Sample_R2_FP_IGO_16991_1
+        # which is incorrect.
+        #
         R1TAG=$(echo $FASTQ1 | perl -ne 'm/(_R1_\d+.fastq.gz)$/; print $1')
         FASTQ2=$(echo $FASTQ1 | sed "s/$R1TAG/${R1TAG/_R1_/_R2_}/")
         if [ ! -e "$FASTQ2" ]; then
