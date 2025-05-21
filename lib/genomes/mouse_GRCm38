@@ -1,2 +1,3 @@
-GENOME_FASTA=/juno/bic/depot/assemblies/M.musculus/GRCm38/GRCm38.fasta
-GENOME_BWA=/juno/bic/depot/assemblies/M.musculus/GRCm38/index/bwa/0.7.12/GRCm38.fasta
+GDIR=/rtsess01/compute/juno/bic/ROOT/rscr/references/
+GENOME_FASTA=$GDIR/Mus_musculus/BIC_MSK/GRCm38/Sequence/WholeGenomeFasta/GRCm38.fa
+GENOME_BWA=$GDIR/Mus_musculus/BIC_MSK/GRCm38/Sequence/BWAIndex/Version0.7.17/GRCm38.fa
