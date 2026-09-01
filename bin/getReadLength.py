@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 '''
 getReadLength.py
 
@@ -16,4 +16,4 @@ for i,line in enumerate(sys.stdin):
         if len(sequences)==10:
             break
 
-print max([len(x) for x in sequences])
+print(max([len(x) for x in sequences]))
