@@ -117,6 +117,35 @@ echo BWA_OPTS=$BWA_OPTS >> $SCRATCH/RUNLOG
 echo GENOME=$GENOME >> $SCRATCH/RUNLOG
 echo TAG=$TAG >> $SCRATCH/RUNLOG
 
+##
+# Everything needed to check the run afterwards lives in one directory:
+# every job's log, the resolved sbatch line, the job-id manifest QRUN
+# appends to, and RUNINFO. bin/checkRun.sh reads it. Absolute, so the
+# log paths it records are usable from anywhere.
+#
+export PEMAP_RUNDIR=$(pwd)/SLURM.PEMAP/${DTS}_$$_${SAMPLENAME}
+mkdir -p $PEMAP_RUNDIR
+echo PEMAP_RUNDIR=$PEMAP_RUNDIR
+echo PEMAP_RUNDIR=$PEMAP_RUNDIR >> $SCRATCH/RUNLOG
+
+{
+    echo DATE=$(date)
+    echo HOST=$(hostname)
+    echo USER=$USER
+    echo SAMPLE=$SAMPLENAME
+    echo TAG=$TAG
+    echo GENOME=$GENOME
+    echo BWA_OPTS=$BWA_OPTS
+    echo VERSION=$SCRIPT_VERSION
+    echo SCRATCH=$SCRATCH
+    echo CWD=$(pwd)
+    echo CMD=$0 $COMMAND_LINE
+} > $PEMAP_RUNDIR/RUNINFO
+
+if [ "$PEMAP_DRYRUN" != "" ]; then
+    echo DRYRUN=yes >> $PEMAP_RUNDIR/RUNINFO
+fi
+
 
 ##
 # HiSeq TrueSeq maximal common adapter
@@ -249,6 +278,7 @@ fi
 
 OUTDIR=$OUTDIR/$SAMPLENAME
 mkdir -p $OUTDIR
+echo OUTDIR=$OUTDIR >> $PEMAP_RUNDIR/RUNINFO
 
 QRUN 2 ${TAG}__04__MERGE HOLD "$MAP_IDS" VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
@@ -322,4 +352,28 @@ QRUN 1 ${TAG}__06__POST HOLD $ASTAT_ID SHORT \
 
 QRUN 1 ${TAG}__07b_CLEANUP HOLD $MD_ID SHORT \
      rm -rf $OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
+
+##
+# The verdict on the whole run. HOLDANY is afterany, so this job runs
+# whatever happened upstream; an afterok hold would be cancelled by
+# exactly the failures it exists to report. Its first line is
+# "PEMAP STATUS: OK" or "PEMAP STATUS: FAILED" followed by which jobs
+# failed and where their logs are.
+#
+QRUN 1 ${TAG}__08__STATUS HOLDANY "$PEMAP_ALL_IDS" SHORT \
+    checkRun.sh -o $OUTDIR/RUNSTATUS.txt $PEMAP_RUNDIR
+
+#
+# Written last on purpose: checkRun.sh reads a manifest without it as a
+# run whose submission was cut short. A failed sbatch exits QRUN, which
+# leaves the jobs already submitted running and the rest of the graph
+# never queued -- those jobs can all succeed, so without this marker a
+# truncated run would report OK.
+#
+echo SUBMIT_COMPLETE=yes >> $PEMAP_RUNDIR/RUNINFO
+
+echo
+echo "Status will be written to $OUTDIR/RUNSTATUS.txt when the run ends"
+echo "Check at any time with: $SDIR/bin/checkRun.sh $PEMAP_RUNDIR"
+echo
 

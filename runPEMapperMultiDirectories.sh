@@ -53,4 +53,8 @@ echo
 echo
 echo DONE
 echo
+echo "Check every sample in this batch with:"
+echo "    $SDIR/bin/checkRun.sh"
+echo
+echo "Each sample also writes its own out___*/<sample>/RUNSTATUS.txt"
 echo
