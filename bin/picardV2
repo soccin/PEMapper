@@ -28,8 +28,9 @@ TDIR=${PEMAP_TMPDIR:-/localscratch/$USER}
 mkdir -p $TDIR 2>/dev/null
 
 if [ ! -d "$TDIR" ]; then
-    TDIR=${TMPDIR:-/tmp}
-    echo "WARNING: cannot make picard TMP_DIR, falling back to $TDIR"
+    echo "FATAL ERROR: cannot make picard TMP_DIR [$TDIR]"
+    echo "Node local scratch must exist; set PEMAP_TMPDIR to override."
+    exit 1
 fi
 
 if [ "$BSUB" == "YES" ]; then
