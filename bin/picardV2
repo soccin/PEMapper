@@ -20,12 +20,18 @@ else
     BSUB=NO
 fi
 
-TDIR=/scratch/socci
-if [ -e /fscratch ]; then
-    TDIR=/fscratch/socci
-fi
+#
+# picard spills its sort to TMP_DIR; /localscratch is node local disk on
+# IRIS. /fscratch and /scratch/socci, the old JUNO paths, are both gone.
+#
+TDIR=${PEMAP_TMPDIR:-/localscratch/$USER}
+mkdir -p $TDIR 2>/dev/null
 
-mkdir -p $TDIR
+if [ ! -d "$TDIR" ]; then
+    echo "FATAL ERROR: cannot make picard TMP_DIR [$TDIR]"
+    echo "Node local scratch must exist; set PEMAP_TMPDIR to override."
+    exit 1
+fi
 
 if [ "$BSUB" == "YES" ]; then
 
