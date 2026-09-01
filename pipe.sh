@@ -8,7 +8,7 @@ if [ ! -e $SDIR/bin/venv/bin/activate ]; then
 fi
 
 export PATH=$SDIR/bin:$PATH
-source $SDIR/bin/lsf.sh
+source $SDIR/bin/slurm.sh
 
 SCRIPT_VERSION=$(git --git-dir=$SDIR/.git --work-tree=$SDIR describe --always --long)
 PIPENAME="PEMapper"
@@ -99,8 +99,19 @@ fi
 echo SAMPLENAME=$SAMPLENAME
 TAG=${TAG}_$$_$SAMPLENAME
 
-export SCRATCH=$(pwd)/_scratch/$(uuidgen -t)
+#
+# SCRATCH holds the inter-job intermediates so it has to be on a shared
+# filesystem; /scratch is WekaFS and visible from every compute node.
+# The DTS level groups a batch run and the uuid keeps concurrent pipe.sh
+# runs from colliding, since runPEMapperMultiDirectories.sh can start
+# several of them within the same second.
+#
+DTS=$(date +%Y%m%d_%H%M%S)
+PEMAP_SCRATCH_ROOT=${PEMAP_SCRATCH_ROOT:-/scratch/core001/bic/socci/PEMapper}
+export SCRATCH=$PEMAP_SCRATCH_ROOT/${DTS}/$(uuidgen -t)
 mkdir -p $SCRATCH
+echo SCRATCH=$SCRATCH
+echo SCRATCH=$SCRATCH >> $SCRATCH/RUNLOG
 echo SAMPLENAME=$SAMPLENAME >> $SCRATCH/RUNLOG
 echo BWA_OPTS=$BWA_OPTS >> $SCRATCH/RUNLOG
 echo GENOME=$GENOME >> $SCRATCH/RUNLOG
@@ -115,6 +126,11 @@ BWA_VERSION=$(bwa 2>&1 | fgrep Version | awk '{print $2}')
 
 JOBS=""
 BAMFILES=""
+MAP_IDS=""
+
+# Remember whether MINLENGTH came in from the environment; it gets
+# exported below and would otherwise look set from the second pair on.
+MINLENGTH_ENV=$MINLENGTH
 
 FASTQFILES=$(find -L $SAMPLEDIRS -name "*[_.]R1[_.]*.fastq.gz")
 echo "FASTQFILES="$FASTQFILES
@@ -146,7 +162,7 @@ for FASTQ1 in $FASTQFILES; do
         FASTQ2=$(echo $FASTQ1 | sed "s/$R1TAG/${R1TAG/_R1_/_R2_}/")
         if [ ! -e "$FASTQ2" ]; then
             echo -e "\n\n   FATAL ERROR in R1=>R2 rename\n\n"
-            exit -1
+            exit 1
         fi
 		;;
 
@@ -166,18 +182,26 @@ for FASTQ1 in $FASTQFILES; do
     UUID=$(uuidgen)
 
     # if MINLENGTH not set in ENV then set to 1/2 read length
-    if [ "$MINLENGTH" == "" ]; then
+    if [ "$MINLENGTH_ENV" == "" ]; then
 
         # Get readlength
         ONE_HALF_READLENGTH=$(zcat $FASTQ1 | $SDIR/bin/getReadLength.py | awk '{printf("%d\n",$1/2)}')
         echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH
         echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH >> $SCRATCH/RUNLOG
+
+        if [ "$ONE_HALF_READLENGTH" == "" ] || [ "$ONE_HALF_READLENGTH" == "0" ]; then
+            echo -e "\n\n   FATAL ERROR: read length detection failed [$FASTQ1]\n\n"
+            exit 1
+        fi
+
         export MINLENGTH=$ONE_HALF_READLENGTH
 
     fi
 
-    QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
+    QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 MEDIUM \
         clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
+    CLIP_ID=$JOBID
+
     CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
     CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
 
@@ -185,13 +209,17 @@ for FASTQ1 in $FASTQFILES; do
 
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 32 \
+    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD $CLIP_ID VMEM 32 LONG \
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
+    BWA_ID=$JOBID
 
-    QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
+    # VMEM 32 not 26: picard.local runs java -Xmx23g and --mem is a hard
+    # cgroup cap here, so JVM overhead on top of the heap would OOM.
+    QRUN 2 ${TAG}_MAP_03__$UUID HOLD $BWA_ID VMEM 32 LONG \
         picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
+    MAP_IDS="$MAP_IDS $JOBID"
 
     BAMFILES="$BAMFILES $SCRATCH/${BASE1%%.fastq*}.bam"
 
@@ -199,9 +227,9 @@ done
 
 echo
 echo BAMFILES=$BAMFILES
-echo HOLDTAG="${TAG}_MAP_*"
+echo MAP_IDS=$MAP_IDS
 echo BAMFILES=$BAMFILES >> $SCRATCH/RUNLOG
-echo HOLDTAG="${TAG}_MAP_*" >> $SCRATCH/RUNLOG
+echo MAP_IDS=$MAP_IDS >> $SCRATCH/RUNLOG
 echo
 
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
@@ -222,63 +250,76 @@ fi
 OUTDIR=$OUTDIR/$SAMPLENAME
 mkdir -p $OUTDIR
 
-QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
+QRUN 2 ${TAG}__04__MERGE HOLD "$MAP_IDS" VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
+MERGE_ID=$JOBID
 
-QRUN 2 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+QRUN 2 ${TAG}__05__STATS.as HOLD $MERGE_ID VMEM 32 LONG \
     picard.local CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA \
     LEVEL=null LEVEL=SAMPLE
+ASTAT_ID=$JOBID
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+QRUN 2 ${TAG}__05__STATS HOLD $MERGE_ID VMEM 32 LONG \
     picardV2 CollectInsertSizeMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___INS.txt \
 	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
+INS_ID=$JOBID
 
-# QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+# QRUN 2 ${TAG}__05__STATS.gcb HOLD $MERGE_ID VMEM 32 LONG \
 #     picard.local CollectGcBiasMetrics \
 #     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___GCB.txt \
 #     CHART=$OUTDIR/${SAMPLENAME}___GCB.pdf \
 #     S=$OUTDIR/${SAMPLENAME}___GCBsummary.txt \
 #     R=$GENOME_FASTA
 
-# QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+# QRUN 2 ${TAG}__05__STATS.wgs HOLD $MERGE_ID VMEM 32 LONG \
 #     picard.local CollectWgsMetrics \
 #     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
 #     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+QRUN 2 ${TAG}__05__MD HOLD $MERGE_ID VMEM 32 LONG \
     picardV2 MarkDuplicates USE_JDK_INFLATER=TRUE USE_JDK_DEFLATER=TRUE \
     I=$OUTDIR/${SAMPLENAME}.bam \
     O=$OUTDIR/${SAMPLENAME}___MD.bam \
     M=$OUTDIR/${SAMPLENAME}___MD.txt \
     CREATE_INDEX=true \
     R=$GENOME_FASTA
+MD_ID=$JOBID
 
 # if [ "$DBSNP" != "" ]; then
-#     QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+#     QRUN 2 ${TAG}__05__STATS.oxog HOLD $MERGE_ID VMEM 32 LONG \
 #         picardV2  CollectOxoGMetrics \
 #         R=$GENOME_FASTA \
 #         DB_SNP=$DBSNP \
 #         I=$OUTDIR/${SAMPLENAME}.bam \
 #         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
 # else
-#     QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+#     QRUN 2 ${TAG}__05__STATS.oxog HOLD $MERGE_ID VMEM 32 LONG \
 #         picardV2  CollectOxoGMetrics \
 #         R=$GENOME_FASTA \
 #         I=$OUTDIR/${SAMPLENAME}.bam \
 #         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
 # fi
 
-QRUN 1 ${TAG}__06__POST HOLD "${TAG}__05__STATS*" \
+#
+# POST only consumes ___AS.txt so it holds on the AlignmentSummary job
+# alone; the LSF glob "${TAG}__05__STATS*" also caught the InsertSize
+# job, which it never needed.
+#
+QRUN 1 ${TAG}__06__POST HOLD $ASTAT_ID SHORT \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
-QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__04__MERGE \
-     rm -rf $SCRATCH
+#
+# Disabled for the IRIS port: SCRATCH now lives outside the working
+# directory, so keep it around until the port is validated.
+#
+# QRUN 1 ${TAG}__07a_CLEANUP HOLD $MERGE_ID SHORT \
+#      rm -rf $SCRATCH
 
-QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__05__MD \
+QRUN 1 ${TAG}__07b_CLEANUP HOLD $MD_ID SHORT \
      rm -rf $OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
 
