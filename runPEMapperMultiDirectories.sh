@@ -32,11 +32,11 @@ MAPPING=$2
 
 for sample in $(cat $MAPPING | cut -f2 | sort | uniq); do
 
-    NUMJOBS=$(bjobs | wc -l);
+    NUMJOBS=$(squeue -h -u $USER | wc -l);
     while [ $NUMJOBS -gt 2000 ]; do
         date
         echo NUMJOBS=$NUMJOBS;
-        NUMJOBS=$(bjobs | wc -l);
+        NUMJOBS=$(squeue -h -u $USER | wc -l);
         sleep 60;
     done
 
