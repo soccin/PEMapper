@@ -82,11 +82,29 @@ else
     fi
 fi
 
-SAMPLEDIR=$1
-SAMPLEDIR=$(echo $SAMPLEDIR | sed 's/\/$//' | sed 's/;.*//')
-
 SAMPLEDIRS=$*
 SAMPLEDIRS=$(echo $SAMPLEDIRS | tr ';' ' ')
+
+#
+# Absolutize the sample directories. BASE1 is the full FASTQ path with
+# '/' replaced by '_', so a relative path leaves every intermediate in
+# $SCRATCH named '.._...' -- a dotfile that plain ls hides. It also makes
+# `basename` give a real sample name when the dir is passed as '.'.
+# (cd; pwd) keeps symlinks in the path, unlike readlink -f.
+#
+SAMPLEDIRS_ABS=""
+for SAMPLEDIR_I in $SAMPLEDIRS; do
+    SAMPLEDIR_ABS=$(cd "$SAMPLEDIR_I" 2>/dev/null && pwd)
+    if [ "$SAMPLEDIR_ABS" == "" ]; then
+        echo -e "\n\n   FATAL ERROR: no such sample directory [$SAMPLEDIR_I]\n\n"
+        exit 1
+    fi
+    SAMPLEDIRS_ABS="$SAMPLEDIRS_ABS $SAMPLEDIR_ABS"
+done
+SAMPLEDIRS=$(echo $SAMPLEDIRS_ABS)
+
+# Only used to derive the default SAMPLENAME
+SAMPLEDIR=$(echo $SAMPLEDIRS | awk '{print $1}')
 
 if [ $SAMPLENAME == "__NotDefined" ]; then
     SAMPLENAME=$(basename $SAMPLEDIR)
@@ -107,9 +125,14 @@ TAG=${TAG}_$$_$SAMPLENAME
 # several of them within the same second.
 #
 DTS=$(date +%Y%m%d_%H%M%S)
-PEMAP_SCRATCH_ROOT=${PEMAP_SCRATCH_ROOT:-/scratch/core001/bic/socci/PEMapper}
+PEMAP_SCRATCH_ROOT=${PEMAP_SCRATCH_ROOT:-/scratch/core001/bic/${USER:-$(id -un)}/PEMapper}
 export SCRATCH=$PEMAP_SCRATCH_ROOT/${DTS}/$(uuidgen -t)
 mkdir -p $SCRATCH
+if [ ! -d "$SCRATCH" ]; then
+    echo -e "\n\n   FATAL ERROR: can not create SCRATCH [$SCRATCH]"
+    echo -e "   Set PEMAP_SCRATCH_ROOT to a shared filesystem you can write\n\n"
+    exit 1
+fi
 echo SCRATCH=$SCRATCH
 echo SCRATCH=$SCRATCH >> $SCRATCH/RUNLOG
 echo SAMPLENAME=$SAMPLENAME >> $SCRATCH/RUNLOG
