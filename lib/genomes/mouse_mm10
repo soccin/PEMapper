@@ -1,0 +1,4 @@
+DEPOT=/data1/core001/rsrc/genomic/bic
+
+GENOME_FASTA=$DEPOT/assemblies/M.musculus/mm10/mm10.fasta
+GENOME_BWA=$DEPOT/assemblies/M.musculus/mm10/index/bwa/0.7.19/mm10.fasta
