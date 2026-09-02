@@ -1,0 +1,3 @@
+GDIR=/rtsess01/compute/juno/bic/ROOT/rscr/references/
+GENOME_FASTA=$GDIR/Mus_musculus/BIC_MSK/GRCm38/Sequence/WholeGenomeFasta/GRCm38.fa
+GENOME_BWA=$GDIR/Mus_musculus/BIC_MSK/GRCm38/Sequence/BWAIndex/Version0.7.17/GRCm38.fa
