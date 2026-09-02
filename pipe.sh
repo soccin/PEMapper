@@ -153,6 +153,17 @@ fi
 ADAPTER="AGATCGGAAGAGC"
 BWA_VERSION=$(bwa 2>&1 | fgrep Version | awk '{print $2}')
 
+# bin/bwa is a symlink pinning the version in the repo; PATH puts
+# $SDIR/bin first. Bash skips a broken symlink during lookup, so a
+# dangling link falls through to whatever bwa a user happens to have.
+if [ "$BWA_VERSION" == "" ]; then
+    echo -e "\n\n   FATAL ERROR: no usable bwa on PATH [$(command -v bwa)]\n\n"
+    exit 1
+fi
+
+echo BWA_VERSION=$BWA_VERSION
+echo BWA_VERSION=$BWA_VERSION >> $SCRATCH/RUNLOG
+
 JOBS=""
 BAMFILES=""
 MAP_IDS=""
