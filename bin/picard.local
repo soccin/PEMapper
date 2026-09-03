@@ -26,7 +26,9 @@ if [ ! -d "$TDIR" ]; then
 fi
 
 
-java -Xmx23g -Djava.io.tmpdir=$TDIR \
+. $SDIR/picardJvm.sh
+
+java -Xmx${PEMAP_XMX_MB}m -Djava.io.tmpdir=$TDIR $PEMAP_JVM_GC_OPTS \
     -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
 
 
