@@ -276,8 +276,10 @@ for FASTQ1 in $FASTQFILES; do
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
     BWA_ID=$JOBID
 
-    # VMEM 32 not 26: picard.local runs java -Xmx23g and --mem is a hard
-    # cgroup cap here, so JVM overhead on top of the heap would OOM.
+    # VMEM 32 not 26: the picard wrappers derive their heap from this
+    # number (bin/picardJvm.sh), leaving a fixed 9g for JVM overhead and
+    # page cache. --mem is a hard cgroup cap here, so a tighter request
+    # would OOM rather than just run slower. 32 gives -Xmx23g.
     QRUN 2 ${TAG}_MAP_03__$UUID HOLD $BWA_ID VMEM 32 LONG \
         picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
         LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
