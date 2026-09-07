@@ -221,24 +221,41 @@ for FASTQ1 in $FASTQFILES; do
         # would be replaced: Sample_R1_FP_IGO_16991_1 => Sample_R2_FP_IGO_16991_1
         # which is incorrect.
         #
-        R1TAG=$(echo $FASTQ1 | perl -ne 'm/(_R1_\d+.fastq.gz)$/; print $1')
-        FASTQ2=$(echo $FASTQ1 | sed "s/$R1TAG/${R1TAG/_R1_/_R2_}/")
-        if [ ! -e "$FASTQ2" ]; then
-            echo -e "\n\n   FATAL ERROR in R1=>R2 rename\n\n"
-            exit 1
-        fi
+        R1TAG=$(echo $FASTQ1 | perl -ne 'm/(_R1_\d+\.fastq\.gz)$/; print $1')
+        R2TAG=${R1TAG/_R1_/_R2_}
 		;;
 
-		# *.R1.*)
-		# FASTQ2=${FASTQ1/.R1./.R2.}
-		# ;;
+		*.R1.*)
+        #
+        # Dot separated names, same rule: anchor on the LAST .R1. before
+        # the .fastq.gz suffix so an R1 in the sample name is not touched.
+        # The leading .* forces the rightmost match. Both .R1.fastq.gz
+        # and .R1.<anything>.fastq.gz are accepted.
+        #
+        R1TAG=$(echo $FASTQ1 | perl -ne 'm/.*(\.R1(?:\.[^\/]*?)?\.fastq\.gz)$/; print $1')
+        R2TAG=${R1TAG/.R1./.R2.}
+		;;
 
 		*)
 		echo
 		echo "FATAL ERROR; INVALID FASTQ1 filename =" $FASTQ1
-		exit
+		exit 1
 
 	esac
+
+    # An empty tag means the name matched the find pattern but not the
+    # rename anchor; without this the strip below is a no-op and FASTQ2
+    # would silently come back equal to FASTQ1.
+    if [ "$R1TAG" == "" ]; then
+        echo -e "\n\n   FATAL ERROR; can not locate R1 tag in $FASTQ1\n\n"
+        exit 1
+    fi
+
+    FASTQ2=${FASTQ1%$R1TAG}$R2TAG
+    if [ ! -e "$FASTQ2" ]; then
+        echo -e "\n\n   FATAL ERROR in R1=>R2 rename [$FASTQ1 => $FASTQ2]\n\n"
+        exit 1
+    fi
 
     BASE1=$(echo $FASTQ1 | tr '/' '_')
     BASE2=$(echo $FASTQ2 | tr '/' '_')
@@ -282,7 +299,7 @@ for FASTQ1 in $FASTQFILES; do
     # would OOM rather than just run slower. 32 gives -Xmx23g.
     QRUN 2 ${TAG}_MAP_03__$UUID HOLD $BWA_ID VMEM 32 LONG \
         picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
-        LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
+        LB=$SAMPLENAME PU=${BASE1%$R1TAG} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
     MAP_IDS="$MAP_IDS $JOBID"
 
