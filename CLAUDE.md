@@ -11,10 +11,14 @@ linter; "running" the pipeline is the only way to exercise it.
 
 ## Which branch is this? Check before anything else
 
-Branches get switched often in this repo, and this file is **untracked**:
-it stays in the working tree across every checkout, so it does not
-necessarily describe the code sitting next to it. Never infer the state
-of the tree from this file. Two commands orient you:
+Branches get switched often in this repo, and this file is **tracked on
+the Slurm branches only** (added by `983974a` on `iris`). On those
+branches it is a normal versioned file; on any branch cut before that
+commit -- `master`, `neo`, `devs/slurm-sh`, the `flavor/*` branches -- it
+does not exist in the history at all, so a checkout **deletes it from the
+working tree**. Either way it does not necessarily describe the code
+sitting next to it. Never infer the state of the tree from this file.
+Two commands orient you:
 
 ```bash
 git branch --show-current
@@ -39,7 +43,8 @@ stale -- say so rather than working from the prose. See "Branch model"
 for what else changes under a checkout.
 
 `IRIS_PUNCH_LIST.md` (untracked, repo root) is the plan of record for the
-Slurm port and is equally branch-blind: section 0 is the verified cluster
+Slurm port. Being untracked, it really is branch-blind -- it survives
+every checkout unchanged. Section 0 is the verified cluster
 environment, section 1 is everything still open, and the appendix holds
 the finished work (A.7 the verification runs, A.8 the genome configs, A.9
 the run status reporting). The old `FIX_NOW_260901.md` and
@@ -282,17 +287,30 @@ New reference FASTAs need a picard `.dict` built with
 ### picard wrappers
 
 `bin/picard.local` and `bin/picardV2` both run `bin/jar/picard.jar` with
-`VALIDATION_STRINGENCY=SILENT` and `-Xmx23g`; `picardV2` adds GC thread
-limits and an `LSF` first-argument mode that self-submits and is dead on
-IRIS. Both use `TMP_DIR=${PEMAP_TMPDIR:-/localscratch/$USER}` and **abort
-if that directory cannot be created**. `/localscratch` is node-local disk
-and is where picard spills tens of GB of sort; do not add a `/tmp`
-fallback, and do not put it on a shared filesystem.
+`VALIDATION_STRINGENCY=SILENT`; `picardV2` adds an `LSF` first-argument
+mode that self-submits and is dead on IRIS. Both use
+`TMP_DIR=${PEMAP_TMPDIR:-/localscratch/$USER}` and **abort if that
+directory cannot be created**. `/localscratch` is node-local disk and is
+where picard spills tens of GB of sort; do not add a `/tmp` fallback, and
+do not put it on a shared filesystem.
 
-The `-Xmx23g` is hardcoded and does not track what `QRUN` requested, so
-the two can drift silently. `VMEM 32` against `-Xmx23g` is the current
-margin: `--mem` is a hard cap here, so JVM overhead on top of the heap
-would OOM at `VMEM 26`.
+Both source **`bin/picardJvm.sh`** for the heap and the GC caps. It is one
+fragment rather than two copies precisely because the old hardcoded
+`-Xmx23g` in each file could drift from what `QRUN` asked for:
+
+- The heap is `$SLURM_MEM_PER_NODE` (MB, always set -- `QRUN` submits with
+  `--mem`) minus a **fixed** `PEMAP_JVM_HEADROOM_MB`, default 9216. Fixed,
+  not proportional, so `VMEM 32` still gives exactly `-Xmx23g`. Unset, as
+  in `doRNAQC.sh`, falls back to 23g; below a 2048m floor it aborts. The
+  headroom covers JVM overhead **and** the page cache picard's own writes
+  charge to the same cgroup. Do not let Java size the heap itself -- alone
+  it takes 25% of the cap.
+- `PEMAP_JVM_GC_OPTS` is `-XX:ParallelGCThreads=2 -XX:ConcGCThreads=2`, a
+  **static cap, deliberately**. Java 23 derives the same 2 from the cgroup
+  on IRIS, so these look redundant; do not remove them and do not derive
+  them from `SLURM_CPUS_PER_TASK`. Enough picard JVMs on one node with
+  their GCs sized to the physical core count will bury it, and a static cap
+  holds whatever the JVM reads. Every picard `QRUN` call site asks `-c 2`.
 
 ### Exit status hygiene
 
@@ -322,6 +340,8 @@ Read from the environment, not from flags:
   `/scratch/core001/bic/$USER/PEMapper`. `pipe.sh` aborts if it cannot
   create the directory rather than running on with no scratch.
 - `PEMAP_TMPDIR` -- picard `TMP_DIR`; defaults to `/localscratch/$USER`.
+- `PEMAP_JVM_HEADROOM_MB` -- MB held back from `$SLURM_MEM_PER_NODE` when
+  `bin/picardJvm.sh` derives the picard heap; defaults to 9216.
 - `PEMAP_ACCOUNT` -- Slurm account; defaults to `core001`. The default
   partition `cpu` denies `core001`, so `-p` is always explicit.
 - `PEMAP_PARTITION_SHORT` / `_MEDIUM` / `_LONG`, `PEMAP_TIME_SHORT` /
@@ -362,10 +382,14 @@ follow from it:
 - **Setup survives a switch.** `bin/venv` is ignored by `bin/.gitignore`
   on every branch and `bin/jar/picard.jar` is committed on every branch,
   so neither needs rebuilding after a checkout.
-- **`CLAUDE.md` and `IRIS_PUNCH_LIST.md` are untracked, not ignored**, so
-  they appear in `git status` on every branch. That is deliberate: they
-  are notes that follow the working tree rather than the history. Do not
-  `git add` them by reflex and do not `git clean` them away.
+- **`IRIS_PUNCH_LIST.md` is untracked, not ignored**, so it appears in
+  `git status` on every branch. That is deliberate: it is a note that
+  follows the working tree rather than the history. Do not `git add` it
+  by reflex and do not `git clean` it away.
+- **`CLAUDE.md` is tracked, but only on the Slurm branches.** Edits to it
+  show up as ` M`, not `??`, and belong in a commit like any other file.
+  Checking out a branch that predates `983974a` removes it; `git stash`
+  it first, or copy it aside, if you want it to survive the switch.
 
 `git describe` runs against `$SDIR/.git` at submit time, so whichever
 branch is checked out when a run starts is what lands in the BAM `@PG`
