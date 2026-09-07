@@ -418,8 +418,11 @@ BAM's `@PG` record.
   `/` turned into `_`) is always the full path. That keeps the scratch
   intermediates out of dotfile territory but makes their names long -- a
   deep enough source tree can approach the 255-byte filename limit.
-- `doRNAQC.sh` is a standalone helper, not part of `pipe.sh`, and still
-  points at retired `/ifs/work` refFlat paths and `~/Code/Gist`.
+- `doRNAQC.sh` is a standalone helper, not part of `pipe.sh`. It points at
+  retired `/ifs/work` refFlat paths, `~/Code/Gist` and `bsub`, so it is
+  **disabled at the top of the file**: it prints what needs fixing and
+  exits 0 before reaching any of that. Do not remove the guard without
+  porting the paths and the two `bsub` calls.
 - Dead on IRIS but still in the tree: `bin/bsub.sh` (hardcodes the JUNO
   LSF binary), `bin/lsf.sh`, `bin/sge.sh`, `bin/sgeWrap.sh`,
   `bin/cutadapt.off`, `bin/runBwa.sh` (a no-op stub), and the `LSF`
