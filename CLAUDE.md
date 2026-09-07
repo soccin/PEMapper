@@ -196,9 +196,14 @@ the report.
 
 Per FASTQ pair, in `$SCRATCH`:
 
-1. `find -L` locates R1 files; R2 is derived by replacing the trailing
-   `_R1_<digits>.fastq.gz` (only the suffix, to avoid mangling sample names
-   that contain `R1_`). A missing R2 is fatal.
+1. `find -L` locates R1 files with `*[_.]R1[_.]*.fastq.gz`. R2 is derived by
+   stripping an anchored suffix tag and appending its R2 form: `_R1_<digits>`
+   for underscore names, the **rightmost** `.R1.` before `.fastq.gz` for
+   dot-separated ones. Anchoring at the suffix is what keeps a sample name or
+   parent directory containing `R1` from being rewritten. A name that matches
+   the `find` pattern but neither anchor is fatal -- without that check the
+   strip is a no-op and R2 comes back equal to R1. A missing R2 is fatal.
+   The read-group `PU` is the filename with that same tag stripped.
 2. Read length is sniffed with `bin/getReadLength.py` and `MINLENGTH` is set
    to half of it unless already exported. An empty result is now fatal
    rather than silently falling back to 35.
@@ -402,10 +407,6 @@ BAM's `@PG` record.
 
 ## Known rough edges
 
-- The FASTQ `find` pattern accepts `*[_.]R1[_.]*` but the R1->R2 rename
-  `case` only handles `_R1_`; the `.R1.` branch is commented out, so
-  dot-separated FASTQ names are discovered and then hit the fatal
-  "INVALID FASTQ1 filename" path.
 - `bin/bwa` is a symlink to
   `/usersoftware/core001/common/RHEL_8/bwa/v0.7.19/bin/bwa` on the Slurm
   branches (the target differs per branch -- see "Switching branches"),
