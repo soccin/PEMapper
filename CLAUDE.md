@@ -45,14 +45,17 @@ Where this file and the code disagree, the code is right and the prose is
 stale -- say so rather than working from the prose. See "Branch model"
 for what else changes under a checkout.
 
-`IRIS_PUNCH_LIST.md` (untracked, repo root) is the plan of record for the
-Slurm port. Being untracked, it really is branch-blind -- it survives
-every checkout unchanged. Section 0 is the verified cluster
-environment, section 1 is everything still open, and the appendix holds
-the finished work (A.7 the verification runs, A.8 the genome configs, A.9
-the run status reporting). The old `FIX_NOW_260901.md` and
-`ROUGH_EDGES_260901.md` are absorbed into A.5 and no longer exist. Read
-the punch list before re-deriving anything about the cluster.
+Three documents sit beside this one, all tracked:
+
+| File | Holds |
+|---|---|
+| `ISSUES.md` | open work, as a numbered issue list, plus the decisions closed as by-design |
+| `docs/IRIS_CLUSTER_INFO.md` | measured cluster facts, `sacct` probes with job ids, validation runs |
+| `docs/LSF_SLURM_PORT.md` | how the JUNO/LSF -> IRIS/Slurm port was done, and the flag translation table |
+
+Read `docs/IRIS_CLUSTER_INFO.md` before re-deriving anything about the
+cluster. The older `IRIS_PUNCH_LIST.md`, `FIX_NOW_260901.md` and
+`ROUGH_EDGES_260901.md` are superseded by those three.
 
 ## Setup
 
@@ -110,7 +113,22 @@ grep -L "#PEMAP_EXIT=0" SLURM.PEMAP/*/*.out           # the LSF-style log grep
 ```
 
 `bin/checkRun.sh` exits 0 (all ok), 1 (failed) and 2 (still running), so it
-can gate a downstream script.
+can gate a downstream script. Three behaviours of it are deliberate:
+
+- The `__08__STATUS` job **exits non-zero when the run failed**, so it shows
+  as `FAILED` in `sacct` -- the exit status carries the verdict, and
+  `sacct -j <status id>` answers the question by itself. `checkRun.sh` never
+  counts `__08__STATUS` in a run's totals, so this does not double-report.
+- `--kill-on-invalid-dep=yes` cancels the whole downstream graph on one
+  failure, so most of a report is cascade. Root failures print first, with
+  the rest grouped under "cancelled downstream".
+- It prefers the log sitting in the run directory it was handed and falls
+  back to the absolute path in the manifest, so a run directory can be
+  copied elsewhere and still be checked.
+
+To inspect a graph *before* it runs, `squeue -u $USER -o "%.12i %.45j %.10T
+%.20E"` -- the `%E` column shows the resolved dependency and is the fastest
+way to catch a mis-threaded id.
 
 Three records make this work, and each covers the others' blind spots.
 Do not remove one thinking another subsumes it:
@@ -168,7 +186,9 @@ under `/bin/sh`.
   (`-t 3-00:00:00`). All three are overridable with `PEMAP_PARTITION_*`
   and `PEMAP_TIME_*`; `PEMAP_TIME_OVERRIDE` replaces the walltime for
   every job. `EnforcePartLimits=ALL`, so an over-limit job is rejected at
-  submit, not queued.
+  submit, not queued. `bwa mem` and the picard sort/merge/MD steps are
+  `LONG` because they can exceed 3h on a full WGS lane; `cutadapt` is
+  `MEDIUM`; transpose and `rm -rf` are `SHORT`.
 - `QRUN` sets the global `JOBID` on return and appends it to
   `PEMAP_ALL_IDS`.
 
@@ -405,10 +425,12 @@ follow from it:
   `sgeWrap.sh` back at `bin/` -- where those branches need them, since
   `pipe.sh:11` there sources `bin/lsf.sh`. A path under `bin/attic` is
   therefore not a stable reference across a checkout.
-- **`IRIS_PUNCH_LIST.md` is untracked, not ignored**, so it appears in
-  `git status` on every branch. That is deliberate: it is a note that
-  follows the working tree rather than the history. Do not `git add` it
-  by reflex and do not `git clean` it away.
+- **`ISSUES.md` and `docs/*.md` are tracked on the Slurm branches only**,
+  like this file, so a checkout of `master`, `neo` or a `flavor/*` removes
+  them from the working tree. `IRIS_PUNCH_LIST.md`, if it is still around,
+  is untracked and therefore survives every checkout -- it is superseded,
+  but do not `git clean` it away without checking it has nothing left that
+  the three tracked documents do not.
 - **`CLAUDE.md` is tracked, but only on the Slurm branches.** Edits to it
   show up as ` M`, not `??`, and belong in a commit like any other file.
   Checking out a branch that predates `983974a` removes it; `git stash`
