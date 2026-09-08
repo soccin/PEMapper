@@ -93,6 +93,12 @@ else
     fi
 fi
 
+#
+# Genome tag for the output tree. $GENOME can be a bare name under
+# lib/genomes or a path to a one-off config, so take the basename.
+#
+GENOME_NAME=$(basename $GENOME)
+
 SAMPLEDIRS=$*
 SAMPLEDIRS=$(echo $SAMPLEDIRS | tr ';' ' ')
 
@@ -340,7 +346,7 @@ if [ "$NO_CLIP" == "Yes" ]; then
 
 fi
 
-OUTDIR=$OUTDIR/$SAMPLENAME
+OUTDIR=$OUTDIR/$GENOME_NAME/$SAMPLENAME
 mkdir -p $OUTDIR
 echo OUTDIR=$OUTDIR >> $PEMAP_RUNDIR/RUNINFO
 
