@@ -33,13 +33,27 @@ fi
 # FASTQ1=$SCRATCH/tmp1_$$_.fastq
 # FASTQ2=$SCRATCH/tmp2_$$_.fastq
 
+##
+# The exit status of this script is the status slurm records for the job
+# and the status bin/checkRun.sh reports. Both branches used to end on a
+# command that always succeeds -- `deactivate` and a bare `wait` -- so a
+# cutadapt failure produced an empty CLIP fastq and a COMPLETED job.
 
 if [ "$NO_CLIP" == "Yes" ]; then
 
     zcat $FASTQ1 >${BASE1}___CLIP.fastq &
-    zcat $FASTQ2 >${BASE2}___CLIP.fastq
+    ZCATPID=$!
 
-    wait
+    zcat $FASTQ2 >${BASE2}___CLIP.fastq
+    RC2=$?
+
+    wait $ZCATPID
+    RC1=$?
+
+    if [ "$RC1" != "0" ] || [ "$RC2" != "0" ]; then
+        echo "FATAL ERROR [$SNAME]: zcat failed, R1 rc=[$RC1] R2 rc=[$RC2]"
+        exit 1
+    fi
 
 else
 
@@ -49,7 +63,13 @@ else
         -a $ADAPTER -A $ADAPTER \
         -o ${BASE1}___CLIP.fastq -p ${BASE2}___CLIP.fastq \
         $FASTQ1 $FASTQ2
+    RC=$?
 
     deactivate
+
+    if [ "$RC" != "0" ]; then
+        echo "FATAL ERROR [$SNAME]: cutadapt failed rc=[$RC]"
+        exit $RC
+    fi
 
 fi

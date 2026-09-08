@@ -1,0 +1,6 @@
+DEPOT=/data1/core001/rsrc/genomic/bic
+
+HYBRID=$DEPOT/assemblies/hybrids/H.sapiens_M.musculus/hg38_mm39
+
+GENOME_FASTA=$HYBRID/hg38_mm39.fasta
+GENOME_BWA=$HYBRID/index/bwa/0.7.19/hg38_mm39.fasta
