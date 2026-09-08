@@ -1,16 +1,15 @@
 # PEMapper — Issues
 
-Branch `iris` (IRIS / Slurm 25.11.5 / RHEL 8). Slurm only; a
-scheduler-agnostic build is out of scope.
+IRIS / Slurm / RHEL 8. Slurm only; a scheduler-agnostic build is out of
+scope.
 
 - Architecture, conventions, the `QRUN` contract: `CLAUDE.md`
+- What changed, per release: `CHANGELOG.md`
+- Tool and reference versions: `VERSIONS.md`
 - Measured cluster facts, probes, validation runs: `docs/IRIS_CLUSTER_INFO.md`
 - How the LSF → Slurm port was done: `docs/LSF_SLURM_PORT.md`
 
 None of it is repeated here.
-
-**Status:** IRIS port complete. Nothing blocks a tag (current `v_4.0.0`).
-Validated on 10 WES samples / 250 jobs / 250 COMPLETED, 0 OOM, 0 timeout.
 
 ## Open
 

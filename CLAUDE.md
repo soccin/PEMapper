@@ -45,17 +45,25 @@ Where this file and the code disagree, the code is right and the prose is
 stale -- say so rather than working from the prose. See "Branch model"
 for what else changes under a checkout.
 
-Three documents sit beside this one, all tracked:
+Five documents sit beside this one, all tracked:
 
 | File | Holds |
 |---|---|
 | `ISSUES.md` | open work, as a numbered issue list, plus the decisions closed as by-design |
+| `CHANGELOG.md` | what changed, per release; `v_4.1.0` in detail, earlier tags one line each |
+| `VERSIONS.md` | version numbers only -- the release, and the bwa, picard, Java, Python, cutadapt, R and reference versions a run uses |
 | `docs/IRIS_CLUSTER_INFO.md` | measured cluster facts, `sacct` probes with job ids, validation runs |
 | `docs/LSF_SLURM_PORT.md` | how the JUNO/LSF -> IRIS/Slurm port was done, and the flag translation table |
 
 Read `docs/IRIS_CLUSTER_INFO.md` before re-deriving anything about the
 cluster. The older `IRIS_PUNCH_LIST.md`, `FIX_NOW_260901.md` and
-`ROUGH_EDGES_260901.md` are superseded by those three.
+`ROUGH_EDGES_260901.md` are superseded by these.
+
+`CHANGELOG.md` and `VERSIONS.md` were added for the `v_4.1.0` release, on
+`rel/v_4.1.0`. They divide the work this file used to carry alone:
+anything with a version number on it -- what changed when, which bwa or
+picard a run used -- belongs in one of those two, not here. This file
+stays about how the code is put together and why.
 
 ## Setup
 
@@ -230,8 +238,11 @@ Per FASTQ pair, in `$SCRATCH`:
    strip is a no-op and R2 comes back equal to R1. A missing R2 is fatal.
    The read-group `PU` is the filename with that same tag stripped.
 2. Read length is sniffed with `bin/getReadLength.py` and `MINLENGTH` is set
-   to half of it unless already exported. An empty result is now fatal
-   rather than silently falling back to 35.
+   to half of it, **per pair**, unless it came in from the environment --
+   `pipe.sh` saves that in `MINLENGTH_ENV` before the loop precisely
+   because it exports `MINLENGTH` inside it, and testing the exported
+   variable made pair 1's read length apply to every later pair. An empty
+   sniff is fatal rather than a silent fallback to 35.
 3. `bin/clipAdapters.sh` runs cutadapt from the venv (TruSeq adapter
    `AGATCGGAAGAGC`, `-O 10 -q 3`).
 4. `bwa mem $BWA_OPTS` appends to a SAM that was pre-seeded with an `@PG`
@@ -421,16 +432,18 @@ follow from it:
   on every branch and `bin/jar/picard.jar` is committed on every branch,
   so neither needs rebuilding after a checkout.
 - **`bin/attic/` exists only on the Slurm branches.** Checking out
-  `master`, `neo` or a `flavor/*` puts `bsub.sh`, `lsf.sh`, `sge.sh` and
-  `sgeWrap.sh` back at `bin/` -- where those branches need them, since
+  `master`, `neo` or a `flavor/*` puts `bsub.sh`, `lsf.sh`, `sge.sh`,
+  `sgeWrap.sh`, `cutadapt.off` and `runBwa.sh` back at `bin/` -- where
+  those branches need the first four, since
   `pipe.sh:11` there sources `bin/lsf.sh`. A path under `bin/attic` is
   therefore not a stable reference across a checkout.
-- **`ISSUES.md` and `docs/*.md` are tracked on the Slurm branches only**,
-  like this file, so a checkout of `master`, `neo` or a `flavor/*` removes
-  them from the working tree. `IRIS_PUNCH_LIST.md`, if it is still around,
+- **`ISSUES.md`, `CHANGELOG.md`, `VERSIONS.md` and `docs/*.md` are tracked
+  on the Slurm branches only**, like this file, so a checkout of `master`,
+  `neo` or a `flavor/*` removes them from the working tree.
+  `IRIS_PUNCH_LIST.md`, if it is still around,
   is untracked and therefore survives every checkout -- it is superseded,
   but do not `git clean` it away without checking it has nothing left that
-  the three tracked documents do not.
+  the tracked documents do not.
 - **`CLAUDE.md` is tracked, but only on the Slurm branches.** Edits to it
   show up as ` M`, not `??`, and belong in a commit like any other file.
   Checking out a branch that predates `983974a` removes it; `git stash`
@@ -440,7 +453,11 @@ follow from it:
 branch is checked out when a run starts is what lands in the BAM `@PG`
 `VN:` field.
 
-Releases are tagged `v_<major>.<minor>.<patch>` (currently `v_4.0.0`).
+Releases are tagged `v_<major>.<minor>.<patch>`. `master` is at `v_4.0.0`
+(JUNO/LSF); `v_4.1.0` is the IRIS/Slurm release, prepared on
+`rel/v_4.1.0` and merged back to `master`. `v_4.0.1-juno` sits on the
+`juno` branch and is not on this line of history.
+
 `pipe.sh` runs `git describe` against its own `$SDIR/.git`, so the checkout
 must remain a git working tree -- the version string is stamped into every
 BAM's `@PG` record.
@@ -464,11 +481,10 @@ BAM's `@PG` record.
   exits 0 before reaching any of that. Do not remove the guard without
   porting the paths and the two `bsub` calls.
 - Dead on IRIS, moved to `bin/attic/` and off `PATH`: `bsub.sh` (hardcodes
-  the JUNO LSF binary), `lsf.sh`, `sge.sh`, `sgeWrap.sh`.
-- Dead on IRIS and **still in `bin/`**, so still on `PATH`:
-  `bin/cutadapt.off`, `bin/runBwa.sh` (a no-op stub that echoes its own
-  name and arguments). Neither is reachable from `pipe.sh`; they were left
-  behind by the `bin/attic` sweep.
+  the JUNO LSF binary), `lsf.sh`, `sge.sh`, `sgeWrap.sh`, `cutadapt.off`,
+  and `runBwa.sh` (a no-op stub that echoes its own name and arguments).
+  The last two went over in a second sweep (`ca53e56`). Nothing in `bin/`
+  is unreachable from `pipe.sh` now.
 - `bin/picardV2` and `bin/picard.local` are now byte-identical apart from
   two blank lines, since `picardV2`'s `LSF` branch was removed. Collapsing
   them to one wrapper means editing four `pipe.sh` call sites; not done.

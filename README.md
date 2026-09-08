@@ -3,10 +3,23 @@
 Paired-end FASTQ to BAM mapping pipeline. Every step is submitted as a
 separate cluster job; the steps are wired together with job dependencies.
 
-## BRANCH: iris (2026-09-01)
+## VERSION: v_4.1.0 (2026-09-08)
 
-Version to work on IRIS (Slurm 25.11.5). Ported from `neo`, which
-targeted JUNO/LSF.
+Runs on IRIS (RHEL 8, Slurm). Ported from `neo`, which targeted JUNO/LSF.
+Check what a checkout actually is before trusting the branch name — line
+11 of `pipe.sh` is the discriminator:
+
+```bash
+sed -n 11p pipe.sh          # source $SDIR/bin/slurm.sh  ->  this version
+```
+
+| File | Holds |
+|---|---|
+| `CHANGELOG.md` | what changed, per release |
+| `VERSIONS.md` | what version of everything a run uses |
+| `ISSUES.md` | open work |
+| `CLAUDE.md` | architecture and internals |
+| `docs/` | measured cluster facts, and how the LSF -> Slurm port was done |
 
 ## SETUP
 
@@ -36,6 +49,8 @@ sample name, column 4 the FASTQ directory):
 ```bash
 ./runPEMapperMultiDirectories.sh [-t TAG] GENOME MAPPING_FILE
 ```
+
+Set `PEMAP_DRYRUN=1` to print the `sbatch` lines and submit nothing.
 
 ## DID IT WORK?
 
@@ -80,27 +95,20 @@ go to `SLURM.PEMAP/<timestamp>_<pid>_<sample>/`, one directory per run.
 Intermediates go to `$PEMAP_SCRATCH_ROOT` on shared scratch, not to the
 working directory.
 
+## GENOMES
+
+`lib/genomes/<name>` are shell fragments that set `GENOME_FASTA` and
+`GENOME_BWA`. A path to any such file works too, so a one-off genome does
+not have to be committed. Three are live on the IRIS reference tree:
+`human_b37`, `mouse_mm10` and `human_hg38+mm39`. The `IRIS/` and `JUNO/`
+subdirectories are archives on retired paths and hold nothing runnable;
+`pipe.sh -g` does not list them.
+
 ## CHANGES
 
-### IRIS / Slurm (2026-09)
-
-- Slurm backend `bin/slurm.sh` replaces `bin/lsf.sh`, which stays as
-  reference. Dependencies are threaded as job ids; Slurm has no
-  equivalent of the LSF `-w post_done(GLOB)` name glob.
-- `bin/checkRun.sh` plus a per-run job-id manifest, a `#PEMAP_EXIT=`
-  trailer on every job log, and an automatic `RUNSTATUS.txt`.
-- One log directory per run instead of a timestamp fan-out per job.
-- `bin/getReadLength.py` and `bin/transpose.py` ported to Python 3; there
-  is no `python2` on IRIS, and both had been failing silently.
-- picard spills to `/localscratch/$USER` and aborts if it cannot.
-- `runPEMapperMultiDirectories.sh` throttles on `squeue`, not `bjobs`.
-
-Only the `human_b37` genome config has been repointed at IRIS paths so
-far; the other four still reference retired `/juno` paths.
-
-### neo (2024-04-18)
-
-- local cutadapt in venv, need to install, run `mkVenv` in bin folder
-- MAJOR CHANGE: `bwa -M` now on by default
-- `runPEMapperMultiDirectories.sh` no limits number of bsubs
-- Also uses new picard with a local JAR file
+`CHANGELOG.md`. In short, `v_4.1.0` replaces the LSF backend with Slurm,
+threads dependencies as job ids, moves scratch and the picard temp off the
+working directory, derives the picard heap from the Slurm allocation, and
+adds the run-verification machinery (`bin/checkRun.sh`, `RUNSTATUS.txt`,
+the per-run job-id manifest and the `#PEMAP_EXIT=` log trailer). Older
+releases, back to `v_0.0.1`, are summarized there too.
