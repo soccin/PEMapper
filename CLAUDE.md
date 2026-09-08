@@ -35,8 +35,11 @@ because it is the code:
 
 `bin/slurm.sh` and `bin/checkRun.sh` exist only on the Slurm branches, so
 their absence says the same thing. The Slurm work was ported from `neo`;
-`bin/lsf.sh` is kept on the Slurm branches as reference and is **not**
-sourced there.
+the LSF and SGE implementations are kept as reference but were moved to
+**`bin/attic/`** (commit `7704c7a`) and are **not** sourced. Note the
+discriminator above still reads `source $SDIR/bin/lsf.sh` for the LSF
+branches -- on those branches the file really is at `bin/lsf.sh`; only the
+Slurm branches have `bin/attic`.
 
 Where this file and the code disagree, the code is right and the prose is
 stale -- say so rather than working from the prose. See "Branch model"
@@ -169,8 +172,10 @@ under `/bin/sh`.
 - `QRUN` sets the global `JOBID` on return and appends it to
   `PEMAP_ALL_IDS`.
 
-`bin/sge.sh` is the legacy SGE implementation of the same contract and
-`bin/lsf.sh` the LSF one; both are reference only, neither is sourced.
+`bin/attic/sge.sh` is the legacy SGE implementation of the same contract
+and `bin/attic/lsf.sh` the LSF one; both are reference only, neither is
+sourced. They are in `bin/attic` rather than `bin` precisely so they are
+off `PATH` -- `pipe.sh` puts `$SDIR/bin` first.
 
 ### Job ids are the dependency graph
 
@@ -366,7 +371,7 @@ mode flag, check whether the behavior already exists on a flavor branch.
 
 ### Switching branches
 
-Switching is routine here and the tree takes it fine, but four things
+Switching is routine here and the tree takes it fine, but several things
 follow from it:
 
 - **`bin/bwa` is a committed symlink whose target is per-branch.** On the
@@ -387,6 +392,11 @@ follow from it:
 - **Setup survives a switch.** `bin/venv` is ignored by `bin/.gitignore`
   on every branch and `bin/jar/picard.jar` is committed on every branch,
   so neither needs rebuilding after a checkout.
+- **`bin/attic/` exists only on the Slurm branches.** Checking out
+  `master`, `neo` or a `flavor/*` puts `bsub.sh`, `lsf.sh`, `sge.sh` and
+  `sgeWrap.sh` back at `bin/` -- where those branches need them, since
+  `pipe.sh:11` there sources `bin/lsf.sh`. A path under `bin/attic` is
+  therefore not a stable reference across a checkout.
 - **`IRIS_PUNCH_LIST.md` is untracked, not ignored**, so it appears in
   `git status` on every branch. That is deliberate: it is a note that
   follows the working tree rather than the history. Do not `git add` it
@@ -423,7 +433,13 @@ BAM's `@PG` record.
   **disabled at the top of the file**: it prints what needs fixing and
   exits 0 before reaching any of that. Do not remove the guard without
   porting the paths and the two `bsub` calls.
-- Dead on IRIS but still in the tree: `bin/bsub.sh` (hardcodes the JUNO
-  LSF binary), `bin/lsf.sh`, `bin/sge.sh`, `bin/sgeWrap.sh`,
-  `bin/cutadapt.off`, `bin/runBwa.sh` (a no-op stub), and the `LSF`
-  self-submit branch of `bin/picardV2`.
+- Dead on IRIS, moved to `bin/attic/` and off `PATH`: `bsub.sh` (hardcodes
+  the JUNO LSF binary), `lsf.sh`, `sge.sh`, `sgeWrap.sh`.
+- Dead on IRIS and **still in `bin/`**, so still on `PATH`:
+  `bin/cutadapt.off`, `bin/runBwa.sh` (a no-op stub that echoes its own
+  name and arguments). Neither is reachable from `pipe.sh`; they were left
+  behind by the `bin/attic` sweep.
+- The `LSF` self-submit branch of `bin/picardV2` (`bin/picardV2:15`, the
+  `bsub` at `:40`) is dead. The rest of `picardV2` is live -- it sources
+  `bin/picardJvm.sh` like `picard.local` -- so this is a branch to remove,
+  not a file.
