@@ -300,8 +300,13 @@ New reference FASTAs need a picard `.dict` built with
 ### picard wrappers
 
 `bin/picard.local` and `bin/picardV2` both run `bin/jar/picard.jar` with
-`VALIDATION_STRINGENCY=SILENT`; `picardV2` adds an `LSF` first-argument
-mode that self-submits and is dead on IRIS. Both use
+`VALIDATION_STRINGENCY=SILENT`. `picardV2` used to take an `LSF`
+first-argument mode that self-submitted with `bsub`; that branch was
+removed 2026-09-07, so the two wrappers are now identical apart from
+whitespace. Both are called from `pipe.sh` (`picard.local` for
+AddOrReplaceReadGroups and MergeSamFiles, `picardV2` for
+CollectInsertSizeMetrics and MarkDuplicates), so neither can be deleted
+without editing those call sites. Both use
 `TMP_DIR=${PEMAP_TMPDIR:-/localscratch/$USER}` and **abort if that
 directory cannot be created**. `/localscratch` is node-local disk and is
 where picard spills tens of GB of sort; do not add a `/tmp` fallback, and
@@ -442,7 +447,6 @@ BAM's `@PG` record.
   `bin/cutadapt.off`, `bin/runBwa.sh` (a no-op stub that echoes its own
   name and arguments). Neither is reachable from `pipe.sh`; they were left
   behind by the `bin/attic` sweep.
-- The `LSF` self-submit branch of `bin/picardV2` (`bin/picardV2:15`, the
-  `bsub` at `:40`) is dead. The rest of `picardV2` is live -- it sources
-  `bin/picardJvm.sh` like `picard.local` -- so this is a branch to remove,
-  not a file.
+- `bin/picardV2` and `bin/picard.local` are now byte-identical apart from
+  two blank lines, since `picardV2`'s `LSF` branch was removed. Collapsing
+  them to one wrapper means editing four `pipe.sh` call sites; not done.

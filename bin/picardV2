@@ -12,14 +12,6 @@ if [ "$COMMAND" == "" ]; then
     exit
 fi
 
-if [ "$COMMAND" == "LSF" ]; then
-    BSUB=YES
-    COMMAND=$1
-    shift
-else
-    BSUB=NO
-fi
-
 #
 # picard spills its sort to TMP_DIR; /localscratch is node local disk on
 # IRIS. /fscratch and /scratch/socci, the old JUNO paths, are both gone.
@@ -35,16 +27,6 @@ fi
 
 . $SDIR/picardJvm.sh
 
-if [ "$BSUB" == "YES" ]; then
-
-    bsub -o LSF.PIC/ -J PIC_${COMMAND}_$$ -R "rusage[mem=10]" -n 3 -W 359 \
-        java -Xmx${PEMAP_XMX_MB}m -Djava.io.tmpdir=$TDIR $PEMAP_JVM_GC_OPTS \
-            -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
-
-else
-
-    java -Xmx${PEMAP_XMX_MB}m -Djava.io.tmpdir=$TDIR $PEMAP_JVM_GC_OPTS \
-        -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
-
-fi
+java -Xmx${PEMAP_XMX_MB}m -Djava.io.tmpdir=$TDIR $PEMAP_JVM_GC_OPTS \
+    -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
 
