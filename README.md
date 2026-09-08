@@ -60,7 +60,7 @@ exactly like a good one. Every run therefore records its job ids, and ends
 with a job that writes the verdict next to the results:
 
 ```bash
-cat out___M/<sample>/RUNSTATUS.txt        # written automatically
+cat out___M/<genome>/<sample>/RUNSTATUS.txt   # written automatically
 bin/checkRun.sh                           # every run under ./SLURM.PEMAP
 bin/checkRun.sh SLURM.PEMAP/<rundir>      # one run
 ```
@@ -72,7 +72,7 @@ the root cause first and the cancelled downstream jobs grouped after it.
 For a whole batch:
 
 ```bash
-grep -L "PEMAP STATUS: OK" out___*/*/RUNSTATUS.txt
+grep -L "PEMAP STATUS: OK" out___*/*/*/RUNSTATUS.txt
 ```
 
 `bin/checkRun.sh` exits 0 (all ok), 1 (something failed) or 2 (still
@@ -80,7 +80,14 @@ running), so it can gate a downstream script.
 
 ## OUTPUT
 
-`out___<BWA_OPTS>/<SAMPLENAME>/`, so the default `-M` gives `out___M/`:
+`out___<BWATAG>[__NoClip]/<GENOME_NAME>/<SAMPLENAME>/`. `BWATAG` is
+`BWA_OPTS` with the dashes stripped and spaces turned into underscores, so
+the default `-M` gives `out___M`, and `NO_CLIP=Yes` makes that
+`out___M__NoClip`. `GENOME_NAME` is `basename` of the genome argument: the
+catalog name for `human_b37`, but the *config filename* when a path to a
+one-off config is passed, so `/path/to/my_genome.sh` lands under
+`my_genome.sh`, not under the reference it names. The default `-M` with `human_b37` therefore gives
+`out___M/human_b37/`:
 
 | File | What |
 |---|---|

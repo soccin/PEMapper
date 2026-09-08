@@ -113,10 +113,10 @@ that OOMs, times out or exits non-zero leaves a log that can look
 identical to a good one.
 
 ```bash
-cat out___M/<sample>/RUNSTATUS.txt        # written automatically by __08__STATUS
+cat out___M/<genome>/<sample>/RUNSTATUS.txt   # written automatically by __08__STATUS
 bin/checkRun.sh                           # every run under ./SLURM.PEMAP
 bin/checkRun.sh SLURM.PEMAP/<rundir>      # one run
-grep -L "PEMAP STATUS: OK" out___*/*/RUNSTATUS.txt    # a whole batch
+grep -L "PEMAP STATUS: OK" out___*/*/*/RUNSTATUS.txt  # a whole batch
 grep -L "#PEMAP_EXIT=0" SLURM.PEMAP/*/*.out           # the LSF-style log grep
 ```
 
@@ -260,11 +260,13 @@ the resolved parameters. The `07a` job that removed it is **commented out
 in `pipe.sh`** for the duration of the port, per the user -- do not
 re-enable it. The `07b` job that removes the pre-MD BAM/BAI is active.
 
-Output goes to `out___<BWATAG>[__NoClip]/<SAMPLENAME>/`, where `BWATAG` is
-`BWA_OPTS` with dashes stripped and spaces turned into underscores (so the
-default `-M` yields `out___M`). Products are `<S>___MD.bam`, `___MD.txt`,
-`___AS.txt`, `___ASt.txt` (transposed), `___INS.txt`, `___INSHist.pdf`,
-plus `RUNSTATUS.txt`.
+Output goes to `out___<BWATAG>[__NoClip]/<GENOME_NAME>/<SAMPLENAME>/`, where
+`BWATAG` is `BWA_OPTS` with dashes stripped and spaces turned into underscores
+(so the default `-M` yields `out___M`) and `GENOME_NAME` is `basename $GENOME`,
+so the same sample mapped against two references does not collide. A path to a
+one-off config puts the *filename* there, not a catalog name. Products are
+`<S>___MD.bam`, `___MD.txt`, `___AS.txt`, `___ASt.txt` (transposed),
+`___INS.txt`, `___INSHist.pdf`, plus `RUNSTATUS.txt`.
 
 ### Run artifacts
 
