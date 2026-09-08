@@ -1,5 +1,26 @@
 #!/bin/bash
 
+##
+# DISABLED on IRIS. Everything this script points at is dead:
+#
+#   ~/Code/Gist/getGenomeBuild.sh    personal checkout, not in this repo
+#   /ifs/work/socci/...refFlat...    retired path
+#   bsub -R "rusage[mem=36]"         LSF; there is no bsub on IRIS
+#
+# It is a standalone helper and is not called by pipe.sh, so nothing in
+# the pipeline is affected. To bring it back: repoint the refFlat files
+# at /data1/core001/rsrc, replace getGenomeBuild.sh, and convert the two
+# bsub calls to QRUN (see bin/slurm.sh). Remove this block when done.
+#
+cat >&2 <<'EOM'
+
+  doRNAQC.sh is disabled: its reference paths and its LSF bsub calls
+  have not been ported to IRIS. Nothing was submitted. See the comment
+  at the top of this script for what needs fixing.
+
+EOM
+exit 0
+
 BAM=$1
 BUILD=$(~/Code/Gist/getGenomeBuild.sh $BAM)
 

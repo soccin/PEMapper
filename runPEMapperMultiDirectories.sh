@@ -32,11 +32,11 @@ MAPPING=$2
 
 for sample in $(cat $MAPPING | cut -f2 | sort | uniq); do
 
-    NUMJOBS=$(bjobs | wc -l);
+    NUMJOBS=$(squeue -h -u $USER | wc -l);
     while [ $NUMJOBS -gt 2000 ]; do
         date
         echo NUMJOBS=$NUMJOBS;
-        NUMJOBS=$(bjobs | wc -l);
+        NUMJOBS=$(squeue -h -u $USER | wc -l);
         sleep 60;
     done
 
@@ -53,4 +53,8 @@ echo
 echo
 echo DONE
 echo
+echo "Check every sample in this batch with:"
+echo "    $SDIR/bin/checkRun.sh"
+echo
+echo "Each sample also writes its own out___*/<sample>/RUNSTATUS.txt"
 echo

@@ -12,31 +12,21 @@ if [ "$COMMAND" == "" ]; then
     exit
 fi
 
-if [ "$COMMAND" == "LSF" ]; then
-    BSUB=YES
-    COMMAND=$1
-    shift
-else
-    BSUB=NO
+#
+# picard spills its sort to TMP_DIR; /localscratch is node local disk on
+# IRIS. /fscratch and /scratch/socci, the old JUNO paths, are both gone.
+#
+TDIR=${PEMAP_TMPDIR:-/localscratch/$USER}
+mkdir -p $TDIR 2>/dev/null
+
+if [ ! -d "$TDIR" ]; then
+    echo "FATAL ERROR: cannot make picard TMP_DIR [$TDIR]"
+    echo "Node local scratch must exist; set PEMAP_TMPDIR to override."
+    exit 1
 fi
 
-TDIR=/scratch/socci
-if [ -e /fscratch ]; then
-    TDIR=/fscratch/socci
-fi
+. $SDIR/picardJvm.sh
 
-mkdir -p $TDIR
-
-if [ "$BSUB" == "YES" ]; then
-
-    bsub -o LSF.PIC/ -J PIC_${COMMAND}_$$ -R "rusage[mem=10]" -n 3 -W 359 \
-        java -Xmx23g -Djava.io.tmpdir=$TDIR -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 \
-            -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
-
-else
-
-    java -Xmx23g -Djava.io.tmpdir=$TDIR -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 \
-        -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
-
-fi
+java -Xmx${PEMAP_XMX_MB}m -Djava.io.tmpdir=$TDIR $PEMAP_JVM_GC_OPTS \
+    -jar $PICARDJAR $COMMAND TMP_DIR=$TDIR VALIDATION_STRINGENCY=SILENT $*
 

@@ -8,7 +8,7 @@ if [ ! -e $SDIR/bin/venv/bin/activate ]; then
 fi
 
 export PATH=$SDIR/bin:$PATH
-source $SDIR/bin/lsf.sh
+source $SDIR/bin/slurm.sh
 
 SCRIPT_VERSION=$(git --git-dir=$SDIR/.git --work-tree=$SDIR describe --always --long)
 PIPENAME="PEMapper"
@@ -26,6 +26,15 @@ function usage {
     echo "    -g ListGenomes"
     echo
     exit
+}
+
+#
+# lib/genomes holds the config fragments as plain files, plus the IRIS/ and
+# JUNO/ archive directories. A plain `ls` listed those two as though they
+# were genomes. -L so a symlinked config still counts as a file.
+#
+function listGenomes {
+    find -L $SDIR/lib/genomes -maxdepth 1 -type f -printf "%f\n" | sort
 }
 
 BWA_OPTS="-M"
@@ -46,7 +55,7 @@ while getopts "s:hgb:t:" opt; do
         g)
             echo Currently defined genomes
             echo
-            ls -1 $SDIR/lib/genomes
+            listGenomes
             echo
             exit
             ;;
@@ -67,26 +76,46 @@ echo BWA_OPTS="["$BWA_OPTS"]"
 GENOME=$1
 shift
 
-if [ -e $SDIR/lib/genomes/$GENOME ]; then
+# -f not -e: -e matches the IRIS/ and JUNO/ archive directories, and
+# sourcing a directory is a shell error, not a missing-genome message.
+if [ -f $SDIR/lib/genomes/$GENOME ]; then
     source $SDIR/lib/genomes/$GENOME
 else
-    if [ -e $GENOME ]; then
+    if [ -f $GENOME ]; then
         source $GENOME
     else
         echo
         echo GENOME=$GENOME Not Defined
         echo "Currently available (builtin) genomes"
-        ls -1 $SDIR/lib/genomes
+        listGenomes
         echo
         exit
     fi
 fi
 
-SAMPLEDIR=$1
-SAMPLEDIR=$(echo $SAMPLEDIR | sed 's/\/$//' | sed 's/;.*//')
-
 SAMPLEDIRS=$*
 SAMPLEDIRS=$(echo $SAMPLEDIRS | tr ';' ' ')
+
+#
+# Absolutize the sample directories. BASE1 is the full FASTQ path with
+# '/' replaced by '_', so a relative path leaves every intermediate in
+# $SCRATCH named '.._...' -- a dotfile that plain ls hides. It also makes
+# `basename` give a real sample name when the dir is passed as '.'.
+# (cd; pwd) keeps symlinks in the path, unlike readlink -f.
+#
+SAMPLEDIRS_ABS=""
+for SAMPLEDIR_I in $SAMPLEDIRS; do
+    SAMPLEDIR_ABS=$(cd "$SAMPLEDIR_I" 2>/dev/null && pwd)
+    if [ "$SAMPLEDIR_ABS" == "" ]; then
+        echo -e "\n\n   FATAL ERROR: no such sample directory [$SAMPLEDIR_I]\n\n"
+        exit 1
+    fi
+    SAMPLEDIRS_ABS="$SAMPLEDIRS_ABS $SAMPLEDIR_ABS"
+done
+SAMPLEDIRS=$(echo $SAMPLEDIRS_ABS)
+
+# Only used to derive the default SAMPLENAME
+SAMPLEDIR=$(echo $SAMPLEDIRS | awk '{print $1}')
 
 if [ $SAMPLENAME == "__NotDefined" ]; then
     SAMPLENAME=$(basename $SAMPLEDIR)
@@ -99,12 +128,57 @@ fi
 echo SAMPLENAME=$SAMPLENAME
 TAG=${TAG}_$$_$SAMPLENAME
 
-export SCRATCH=$(pwd)/_scratch/$(uuidgen -t)
+#
+# SCRATCH holds the inter-job intermediates so it has to be on a shared
+# filesystem; /scratch is WekaFS and visible from every compute node.
+# The DTS level groups a batch run and the uuid keeps concurrent pipe.sh
+# runs from colliding, since runPEMapperMultiDirectories.sh can start
+# several of them within the same second.
+#
+DTS=$(date +%Y%m%d_%H%M%S)
+PEMAP_SCRATCH_ROOT=${PEMAP_SCRATCH_ROOT:-/scratch/core001/bic/${USER:-$(id -un)}/PEMapper}
+export SCRATCH=$PEMAP_SCRATCH_ROOT/${DTS}/$(uuidgen -t)
 mkdir -p $SCRATCH
+if [ ! -d "$SCRATCH" ]; then
+    echo -e "\n\n   FATAL ERROR: can not create SCRATCH [$SCRATCH]"
+    echo -e "   Set PEMAP_SCRATCH_ROOT to a shared filesystem you can write\n\n"
+    exit 1
+fi
+echo SCRATCH=$SCRATCH
+echo SCRATCH=$SCRATCH >> $SCRATCH/RUNLOG
 echo SAMPLENAME=$SAMPLENAME >> $SCRATCH/RUNLOG
 echo BWA_OPTS=$BWA_OPTS >> $SCRATCH/RUNLOG
 echo GENOME=$GENOME >> $SCRATCH/RUNLOG
 echo TAG=$TAG >> $SCRATCH/RUNLOG
+
+##
+# Everything needed to check the run afterwards lives in one directory:
+# every job's log, the resolved sbatch line, the job-id manifest QRUN
+# appends to, and RUNINFO. bin/checkRun.sh reads it. Absolute, so the
+# log paths it records are usable from anywhere.
+#
+export PEMAP_RUNDIR=$(pwd)/SLURM.PEMAP/${DTS}_$$_${SAMPLENAME}
+mkdir -p $PEMAP_RUNDIR
+echo PEMAP_RUNDIR=$PEMAP_RUNDIR
+echo PEMAP_RUNDIR=$PEMAP_RUNDIR >> $SCRATCH/RUNLOG
+
+{
+    echo DATE=$(date)
+    echo HOST=$(hostname)
+    echo USER=$USER
+    echo SAMPLE=$SAMPLENAME
+    echo TAG=$TAG
+    echo GENOME=$GENOME
+    echo BWA_OPTS=$BWA_OPTS
+    echo VERSION=$SCRIPT_VERSION
+    echo SCRATCH=$SCRATCH
+    echo CWD=$(pwd)
+    echo CMD=$0 $COMMAND_LINE
+} > $PEMAP_RUNDIR/RUNINFO
+
+if [ "$PEMAP_DRYRUN" != "" ]; then
+    echo DRYRUN=yes >> $PEMAP_RUNDIR/RUNINFO
+fi
 
 
 ##
@@ -113,8 +187,24 @@ echo TAG=$TAG >> $SCRATCH/RUNLOG
 ADAPTER="AGATCGGAAGAGC"
 BWA_VERSION=$(bwa 2>&1 | fgrep Version | awk '{print $2}')
 
+# bin/bwa is a symlink pinning the version in the repo; PATH puts
+# $SDIR/bin first. Bash skips a broken symlink during lookup, so a
+# dangling link falls through to whatever bwa a user happens to have.
+if [ "$BWA_VERSION" == "" ]; then
+    echo -e "\n\n   FATAL ERROR: no usable bwa on PATH [$(command -v bwa)]\n\n"
+    exit 1
+fi
+
+echo BWA_VERSION=$BWA_VERSION
+echo BWA_VERSION=$BWA_VERSION >> $SCRATCH/RUNLOG
+
 JOBS=""
 BAMFILES=""
+MAP_IDS=""
+
+# Remember whether MINLENGTH came in from the environment; it gets
+# exported below and would otherwise look set from the second pair on.
+MINLENGTH_ENV=$MINLENGTH
 
 FASTQFILES=$(find -L $SAMPLEDIRS -name "*[_.]R1[_.]*.fastq.gz")
 echo "FASTQFILES="$FASTQFILES
@@ -142,42 +232,67 @@ for FASTQ1 in $FASTQFILES; do
         # would be replaced: Sample_R1_FP_IGO_16991_1 => Sample_R2_FP_IGO_16991_1
         # which is incorrect.
         #
-        R1TAG=$(echo $FASTQ1 | perl -ne 'm/(_R1_\d+.fastq.gz)$/; print $1')
-        FASTQ2=$(echo $FASTQ1 | sed "s/$R1TAG/${R1TAG/_R1_/_R2_}/")
-        if [ ! -e "$FASTQ2" ]; then
-            echo -e "\n\n   FATAL ERROR in R1=>R2 rename\n\n"
-            exit -1
-        fi
+        R1TAG=$(echo $FASTQ1 | perl -ne 'm/(_R1_\d+\.fastq\.gz)$/; print $1')
+        R2TAG=${R1TAG/_R1_/_R2_}
 		;;
 
-		# *.R1.*)
-		# FASTQ2=${FASTQ1/.R1./.R2.}
-		# ;;
+		*.R1.*)
+        #
+        # Dot separated names, same rule: anchor on the LAST .R1. before
+        # the .fastq.gz suffix so an R1 in the sample name is not touched.
+        # The leading .* forces the rightmost match. Both .R1.fastq.gz
+        # and .R1.<anything>.fastq.gz are accepted.
+        #
+        R1TAG=$(echo $FASTQ1 | perl -ne 'm/.*(\.R1(?:\.[^\/]*?)?\.fastq\.gz)$/; print $1')
+        R2TAG=${R1TAG/.R1./.R2.}
+		;;
 
 		*)
 		echo
 		echo "FATAL ERROR; INVALID FASTQ1 filename =" $FASTQ1
-		exit
+		exit 1
 
 	esac
+
+    # An empty tag means the name matched the find pattern but not the
+    # rename anchor; without this the strip below is a no-op and FASTQ2
+    # would silently come back equal to FASTQ1.
+    if [ "$R1TAG" == "" ]; then
+        echo -e "\n\n   FATAL ERROR; can not locate R1 tag in $FASTQ1\n\n"
+        exit 1
+    fi
+
+    FASTQ2=${FASTQ1%$R1TAG}$R2TAG
+    if [ ! -e "$FASTQ2" ]; then
+        echo -e "\n\n   FATAL ERROR in R1=>R2 rename [$FASTQ1 => $FASTQ2]\n\n"
+        exit 1
+    fi
 
     BASE1=$(echo $FASTQ1 | tr '/' '_')
     BASE2=$(echo $FASTQ2 | tr '/' '_')
     UUID=$(uuidgen)
 
     # if MINLENGTH not set in ENV then set to 1/2 read length
-    if [ "$MINLENGTH" == "" ]; then
+    if [ "$MINLENGTH_ENV" == "" ]; then
 
         # Get readlength
         ONE_HALF_READLENGTH=$(zcat $FASTQ1 | $SDIR/bin/getReadLength.py | awk '{printf("%d\n",$1/2)}')
         echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH
         echo ONE_HALF_READLENGTH=$ONE_HALF_READLENGTH >> $SCRATCH/RUNLOG
+
+        if [ "$ONE_HALF_READLENGTH" == "" ] || [ "$ONE_HALF_READLENGTH" == "0" ]; then
+            echo -e "\n\n   FATAL ERROR: read length detection failed [$FASTQ1]\n\n"
+            exit 1
+        fi
+
         export MINLENGTH=$ONE_HALF_READLENGTH
 
     fi
 
-    QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 \
+    QRUN 2 ${TAG}_MAP_01__$UUID VMEM 5 MEDIUM \
         clipAdapters.sh $ADAPTER $FASTQ1 $FASTQ2
+    CLIP_ID=$JOBID
+
     CLIPSEQ1=$SCRATCH/${BASE1}___CLIP.fastq
     CLIPSEQ2=$SCRATCH/${BASE2}___CLIP.fastq
 
@@ -185,13 +300,19 @@ for FASTQ1 in $FASTQFILES; do
 
     echo -e "@PG\tID:$PIPENAME\tVN:$SCRIPT_VERSION\tCL:$0 ${COMMAND_LINE}" >> $SCRATCH/${BASE1%%.fastq*}.sam
 
-    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD ${TAG}_MAP_01__$UUID VMEM 32 \
+    QRUN $BWA_THREADS ${TAG}_MAP_02__$UUID HOLD $CLIP_ID VMEM 32 LONG \
         bwa mem $BWA_OPTS -t $BWA_THREADS $GENOME_BWA $CLIPSEQ1 $CLIPSEQ2 \>\>$SCRATCH/${BASE1%%.fastq*}.sam
+    BWA_ID=$JOBID
 
-    QRUN 2 ${TAG}_MAP_03__$UUID HOLD ${TAG}_MAP_02__$UUID VMEM 26 \
+    # VMEM 32 not 26: the picard wrappers derive their heap from this
+    # number (bin/picardJvm.sh), leaving a fixed 9g for JVM overhead and
+    # page cache. --mem is a hard cgroup cap here, so a tighter request
+    # would OOM rather than just run slower. 32 gives -Xmx23g.
+    QRUN 2 ${TAG}_MAP_03__$UUID HOLD $BWA_ID VMEM 32 LONG \
         picard.local AddOrReplaceReadGroups MAX_RECORDS_IN_RAM=5000000 CREATE_INDEX=true SO=coordinate \
-        LB=$SAMPLENAME PU=${BASE1%%_R1_*} SM=$SAMPLENAME PL=illumina CN=GCL \
+        LB=$SAMPLENAME PU=${BASE1%$R1TAG} SM=$SAMPLENAME PL=illumina CN=GCL \
         I=$SCRATCH/${BASE1%%.fastq*}.sam O=$SCRATCH/${BASE1%%.fastq*}.bam
+    MAP_IDS="$MAP_IDS $JOBID"
 
     BAMFILES="$BAMFILES $SCRATCH/${BASE1%%.fastq*}.bam"
 
@@ -199,9 +320,9 @@ done
 
 echo
 echo BAMFILES=$BAMFILES
-echo HOLDTAG="${TAG}_MAP_*"
+echo MAP_IDS=$MAP_IDS
 echo BAMFILES=$BAMFILES >> $SCRATCH/RUNLOG
-echo HOLDTAG="${TAG}_MAP_*" >> $SCRATCH/RUNLOG
+echo MAP_IDS=$MAP_IDS >> $SCRATCH/RUNLOG
 echo
 
 INPUTS=$(echo $BAMFILES | tr ' ' '\n' | awk '{print "I="$1}')
@@ -221,64 +342,102 @@ fi
 
 OUTDIR=$OUTDIR/$SAMPLENAME
 mkdir -p $OUTDIR
+echo OUTDIR=$OUTDIR >> $PEMAP_RUNDIR/RUNINFO
 
-QRUN 2 ${TAG}__04__MERGE HOLD "${TAG}_MAP_*"  VMEM 32 LONG \
+QRUN 2 ${TAG}__04__MERGE HOLD "$MAP_IDS" VMEM 32 LONG \
     picard.local MergeSamFiles SO=coordinate CREATE_INDEX=true \
     O=$OUTDIR/${SAMPLENAME}.bam $INPUTS
+MERGE_ID=$JOBID
 
-QRUN 2 ${TAG}__05__STATS.as HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+QRUN 2 ${TAG}__05__STATS.as HOLD $MERGE_ID VMEM 32 LONG \
     picard.local CollectAlignmentSummaryMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___AS.txt \
     R=$GENOME_FASTA \
     LEVEL=null LEVEL=SAMPLE
+ASTAT_ID=$JOBID
 
-QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+QRUN 2 ${TAG}__05__STATS HOLD $MERGE_ID VMEM 32 LONG \
     picardV2 CollectInsertSizeMetrics \
     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___INS.txt \
 	H=$OUTDIR/${SAMPLENAME}___INSHist.pdf \
     R=$GENOME_FASTA
+INS_ID=$JOBID
 
-# QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+# QRUN 2 ${TAG}__05__STATS.gcb HOLD $MERGE_ID VMEM 32 LONG \
 #     picard.local CollectGcBiasMetrics \
 #     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___GCB.txt \
 #     CHART=$OUTDIR/${SAMPLENAME}___GCB.pdf \
 #     S=$OUTDIR/${SAMPLENAME}___GCBsummary.txt \
 #     R=$GENOME_FASTA
 
-# QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+# QRUN 2 ${TAG}__05__STATS.wgs HOLD $MERGE_ID VMEM 32 LONG \
 #     picard.local CollectWgsMetrics \
 #     I=$OUTDIR/${SAMPLENAME}.bam O=$OUTDIR/${SAMPLENAME}___WGS.txt \
 #     R=$GENOME_FASTA
 
-QRUN 2 ${TAG}__05__MD HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+QRUN 2 ${TAG}__05__MD HOLD $MERGE_ID VMEM 32 LONG \
     picardV2 MarkDuplicates USE_JDK_INFLATER=TRUE USE_JDK_DEFLATER=TRUE \
     I=$OUTDIR/${SAMPLENAME}.bam \
     O=$OUTDIR/${SAMPLENAME}___MD.bam \
     M=$OUTDIR/${SAMPLENAME}___MD.txt \
     CREATE_INDEX=true \
     R=$GENOME_FASTA
+MD_ID=$JOBID
 
 # if [ "$DBSNP" != "" ]; then
-#     QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+#     QRUN 2 ${TAG}__05__STATS.oxog HOLD $MERGE_ID VMEM 32 LONG \
 #         picardV2  CollectOxoGMetrics \
 #         R=$GENOME_FASTA \
 #         DB_SNP=$DBSNP \
 #         I=$OUTDIR/${SAMPLENAME}.bam \
 #         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
 # else
-#     QRUN 2 ${TAG}__05__STATS HOLD ${TAG}__04__MERGE VMEM 32 LONG \
+#     QRUN 2 ${TAG}__05__STATS.oxog HOLD $MERGE_ID VMEM 32 LONG \
 #         picardV2  CollectOxoGMetrics \
 #         R=$GENOME_FASTA \
 #         I=$OUTDIR/${SAMPLENAME}.bam \
 #         O=$OUTDIR/${SAMPLENAME}___OxoG.txt
 # fi
 
-QRUN 1 ${TAG}__06__POST HOLD "${TAG}__05__STATS*" \
+#
+# POST only consumes ___AS.txt so it holds on the AlignmentSummary job
+# alone; the LSF glob "${TAG}__05__STATS*" also caught the InsertSize
+# job, which it never needed.
+#
+QRUN 1 ${TAG}__06__POST HOLD $ASTAT_ID SHORT \
 	transposeASMetrics.sh $OUTDIR/${SAMPLENAME}___AS.txt \>$OUTDIR/${SAMPLENAME}___ASt.txt
 
-QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__04__MERGE \
-     rm -rf $SCRATCH
+#
+# Disabled for the IRIS port: SCRATCH now lives outside the working
+# directory, so keep it around until the port is validated.
+#
+# QRUN 1 ${TAG}__07a_CLEANUP HOLD $MERGE_ID SHORT \
+#      rm -rf $SCRATCH
 
-QRUN 1 ${TAG}__07b_CLEANUP HOLD ${TAG}__05__MD \
+QRUN 1 ${TAG}__07b_CLEANUP HOLD $MD_ID SHORT \
      rm -rf $OUTDIR/${SAMPLENAME}.bam $OUTDIR/${SAMPLENAME}.bai
+
+##
+# The verdict on the whole run. HOLDANY is afterany, so this job runs
+# whatever happened upstream; an afterok hold would be cancelled by
+# exactly the failures it exists to report. Its first line is
+# "PEMAP STATUS: OK" or "PEMAP STATUS: FAILED" followed by which jobs
+# failed and where their logs are.
+#
+QRUN 1 ${TAG}__08__STATUS HOLDANY "$PEMAP_ALL_IDS" SHORT \
+    checkRun.sh -o $OUTDIR/RUNSTATUS.txt $PEMAP_RUNDIR
+
+#
+# Written last on purpose: checkRun.sh reads a manifest without it as a
+# run whose submission was cut short. A failed sbatch exits QRUN, which
+# leaves the jobs already submitted running and the rest of the graph
+# never queued -- those jobs can all succeed, so without this marker a
+# truncated run would report OK.
+#
+echo SUBMIT_COMPLETE=yes >> $PEMAP_RUNDIR/RUNINFO
+
+echo
+echo "Status will be written to $OUTDIR/RUNSTATUS.txt when the run ends"
+echo "Check at any time with: $SDIR/bin/checkRun.sh $PEMAP_RUNDIR"
+echo
 
