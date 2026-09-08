@@ -287,8 +287,11 @@ anything runnable**:
 - `lib/genomes/JUNO/` -- the older, much larger set, also on dead
   `/juno/depot` paths.
 
-`pipe.sh -g` is `ls -1 $SDIR/lib/genomes`, so it lists both archive
-directories as though they were genomes.
+`pipe.sh -g` and the "Not Defined" fallback both call `listGenomes`
+(`pipe.sh:36`), which is `find -L ... -maxdepth 1 -type f`, so the two
+archive directories are not listed as genomes. The genome lookup itself
+tests `-f`, not `-e`, so naming an archive directory gives the "Not
+Defined" message instead of trying to `source` a directory.
 
 New reference FASTAs need a picard `.dict` built with
 `CreateSequenceDictionary` or the metrics steps fail with an obscure

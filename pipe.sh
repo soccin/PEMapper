@@ -28,6 +28,15 @@ function usage {
     exit
 }
 
+#
+# lib/genomes holds the config fragments as plain files, plus the IRIS/ and
+# JUNO/ archive directories. A plain `ls` listed those two as though they
+# were genomes. -L so a symlinked config still counts as a file.
+#
+function listGenomes {
+    find -L $SDIR/lib/genomes -maxdepth 1 -type f -printf "%f\n" | sort
+}
+
 BWA_OPTS="-M"
 SAMPLENAME="__NotDefined"
 while getopts "s:hgb:t:" opt; do
@@ -46,7 +55,7 @@ while getopts "s:hgb:t:" opt; do
         g)
             echo Currently defined genomes
             echo
-            ls -1 $SDIR/lib/genomes
+            listGenomes
             echo
             exit
             ;;
@@ -67,16 +76,18 @@ echo BWA_OPTS="["$BWA_OPTS"]"
 GENOME=$1
 shift
 
-if [ -e $SDIR/lib/genomes/$GENOME ]; then
+# -f not -e: -e matches the IRIS/ and JUNO/ archive directories, and
+# sourcing a directory is a shell error, not a missing-genome message.
+if [ -f $SDIR/lib/genomes/$GENOME ]; then
     source $SDIR/lib/genomes/$GENOME
 else
-    if [ -e $GENOME ]; then
+    if [ -f $GENOME ]; then
         source $GENOME
     else
         echo
         echo GENOME=$GENOME Not Defined
         echo "Currently available (builtin) genomes"
-        ls -1 $SDIR/lib/genomes
+        listGenomes
         echo
         exit
     fi
