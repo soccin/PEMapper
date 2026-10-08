@@ -7,6 +7,15 @@ All notable changes to PEMapper. Versions are the release tags
 Tool and reference versions are in `VERSIONS.md`. Open work is in
 `ISSUES.md`.
 
+## Unreleased
+
+### Added
+
+- **Genome config `human_GRCh38`**, the GDC `GRCh38.d1.vd1` reference at
+  `H.sapiens/GRCh38.d1.vd1`, with a bwa 0.7.19 index built locally.
+  Same contigs as the archived JUNO config `lib/genomes/IRIS/human_GRCh38`,
+  so GRCh38 runs on IRIS match runs made on JUNO.
+
 ## v_4.1.0 — 2026-09-08
 
 The IRIS / Slurm release. Everything from `v_4.0.0` (JUNO / LSF 10.1) to

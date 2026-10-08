@@ -51,6 +51,7 @@ pipeline runs.
 | `human_b37` | b37 | 0.7.19 |
 | `mouse_mm10` | mm10 | 0.7.19 |
 | `human_hg38+mm39` | hg38 + mm39 hybrid | 0.7.19 |
+| `human_GRCh38` | GDC GRCh38.d1.vd1 | 0.7.19 |
 
 ## Tag format
 
