@@ -14,6 +14,13 @@
 # BAM's @RG lines and must be unique. With -s the job log is DSB_<jobid>.out
 # in the current directory.
 #
+# Slurm writes nothing of its own into the log, so with -s the log ends
+# with a "#DSB_EXIT=<rc>" trailer. A missing trailer is a failure too: a
+# job Slurm kills for memory or walltime never gets to write it. List
+# every job that did not succeed with
+#
+#   grep -L "#DSB_EXIT=0" DSB_*.out
+#
 # -s asks for -c 2 and 32G whatever the size, matching a LONG picard QRUN
 # call site: -c 2 for the GC thread cap and 32G, which bin/picardJvm.sh
 # turns into -Xmx23g. DownsampleSam streams the BAM, so neither grows
@@ -128,7 +135,8 @@ if [ "$SUBMIT" == "Yes" ]; then
     ABAM=$(cd "$(dirname "$BAM")" && pwd)/$(basename "$BAM")
 
     JOBID=$(sbatch --parsable -A core001 $TIER_ARGS -N 1 -n 1 -c 2 --mem=32G \
-        -J DSB -o DSB_%j.out --wrap "$SDIR/downsampleBam.sh $DOWN $ABAM")
+        -J DSB -o DSB_%j.out \
+        --wrap "$SDIR/downsampleBam.sh $DOWN $ABAM; RC=\$?; echo \"#DSB_EXIT=\$RC\"; exit \$RC")
     RC=$?
 
     if [ "$RC" != "0" ]; then
