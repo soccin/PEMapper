@@ -1,0 +1,4 @@
+DEPOT=/data1/core001/rsrc/genomic/bic
+
+GENOME_FASTA=$DEPOT/assemblies/H.sapiens/GRCh38.d1.vd1/GRCh38.d1.vd1.fa
+GENOME_BWA=$DEPOT/assemblies/H.sapiens/GRCh38.d1.vd1/index/bwa/0.7.19/GRCh38.d1.vd1.fa
