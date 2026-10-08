@@ -1,48 +1,67 @@
 #!/bin/bash
-#SBATCH -A core001
-#SBATCH -p cmobic_cpu
-#SBATCH -t 3-00:00:00
-#SBATCH -N 1
-#SBATCH -n 1
-#SBATCH -c 2
-#SBATCH --mem=32G
-#SBATCH -J DSB
-#SBATCH -o DSB_%j.out
 
 #
 # Downsample a BAM to 1/DOWN of its read pairs with picard DownsampleSam.
 #
-#   downsampleBam.sh DOWN BAM
-#   sbatch bin/downsampleBam.sh DOWN BAM
+#   downsampleBam.sh [-s|--submit] DOWN BAM
+#
+# DO NOT run this script with sbatch. It has no #SBATCH header; use -s,
+# which submits it to the cluster with a partition and time limit picked
+# from the size of BAM. Without -s it runs in the current shell.
 #
 # Writes out/picard/DSB/<SM>/<basename BAM .bam>.dn_<DOWN>.bam and its
 # .bai, relative to the current directory. SM is the sample tag of the
-# BAM's @RG lines and must be unique.
+# BAM's @RG lines and must be unique. With -s the job log is DSB_<jobid>.out
+# in the current directory.
 #
-# The #SBATCH lines match a LONG picard QRUN call site: -c 2 for the GC
-# thread cap and 32G, which bin/picardJvm.sh turns into -Xmx23g.
+# Slurm writes nothing of its own into the log, so with -s the log ends
+# with a "#DSB_EXIT=<rc>" trailer. A missing trailer is a failure too: a
+# job Slurm kills for memory or walltime never gets to write it. List
+# every job that did not succeed with
 #
+#   grep -L "#DSB_EXIT=0" DSB_*.out
+#
+# -s asks for -c 2 and 32G whatever the size, matching a LONG picard QRUN
+# call site: -c 2 for the GC thread cap and 32G, which bin/picardJvm.sh
+# turns into -Xmx23g. DownsampleSam streams the BAM, so neither grows
+# with it.
+#
+
+#
+# 35 GiB is roughly 80% of the smallest KEJ WGS BAM. A BAM under it gets
+# 2h on cpushort or cmobic_short, anything else 3 days on cmobic_cpu.
+# cpushort's MaxTime is exactly 2:00:00 and it pins its own qos, so the
+# short tier must not set --qos.
+#
+SIZE_CUTOFF=$((35 * 1024 ** 3))
+SHORT_ARGS="-p cpushort,cmobic_short -t 2:00:00"
+LONG_ARGS="-p cmobic_cpu -t 3-00:00:00 --qos=priority"
+
+usage() {
+    echo "usage: downsampleBam.sh [-s|--submit] DOWN BAM"
+    echo "    keep 1/DOWN of the reads; DOWN is an integer > 1"
+    echo "    -s|--submit  submit to the cluster, time limit set by BAM size"
+    echo "    do not run this script with sbatch; use -s"
+}
 
 SDIR="$( cd "$( dirname "$0" )" && pwd )"
 
-#
-# sbatch runs a copy of this script out of the slurmd spool directory, so
-# $0 does not lead back to bin/. Ask slurm for the path that was submitted.
-#
-if [ ! -x "$SDIR/picard.local" ] && [ -n "$SLURM_JOB_ID" ]; then
-    SCRIPT=$(scontrol show job $SLURM_JOB_ID \
-        | awk '$1 ~ /^Command=/ {sub(/^Command=/, "", $1); print $1}')
-    SDIR="$( cd "$( dirname "$SCRIPT" )" && pwd )"
-fi
-
 if [ ! -x "$SDIR/picard.local" ]; then
-    echo "FATAL ERROR: cannot find picard.local in SDIR [$SDIR]"
+    if [ -n "$SLURM_JOB_ID" ]; then
+        echo "FATAL ERROR: this script cannot be run with sbatch; use -s"
+    else
+        echo "FATAL ERROR: cannot find picard.local in SDIR [$SDIR]"
+    fi
     exit 1
 fi
 
+SUBMIT=No
+case "$1" in
+    -s|--submit) SUBMIT=Yes; shift ;;
+esac
+
 if [ "$#" != "2" ]; then
-    echo "usage: downsampleBam.sh DOWN BAM"
-    echo "    keep 1/DOWN of the reads; DOWN is an integer > 1"
+    usage
     exit 1
 fi
 
@@ -60,12 +79,25 @@ if [[ "$BAM" != *.bam ]] || [ ! -s "$BAM" ]; then
 fi
 
 #
-# Without pipefail a picard failure here would read as an empty SM.
+# samtools comes from Lmod. module is normally inherited as an exported
+# function; source the init script in case this shell did not get it.
+#
+if [ "$(type -t module)" != "function" ]; then
+    . /etc/profile.d/modules.sh
+fi
+
+module load samtools
+if ! command -v samtools >/dev/null; then
+    echo "FATAL ERROR: module load samtools failed"
+    exit 1
+fi
+
+#
+# Without pipefail a samtools failure here would read as an empty SM.
 #
 set -o pipefail
 
-SM=$($SDIR/picard.local ViewSam I=$BAM HEADER_ONLY=true \
-        ALIGNMENT_STATUS=All PF_STATUS=All \
+SM=$(samtools view -H $BAM \
     | awk -F'\t' '$1 == "@RG" {
         for(i = 2; i <= NF; i++) if($i ~ /^SM:/) print substr($i, 4)
       }' \
@@ -85,6 +117,37 @@ fi
 if [ "$(echo "$SM" | wc -l)" != "1" ]; then
     echo "FATAL ERROR: more than one SM tag in [$BAM]:" $SM
     exit 1
+fi
+
+if [ "$SUBMIT" == "Yes" ]; then
+
+    SIZE=$(stat -L -c %s $BAM)
+    if [ "$SIZE" -lt "$SIZE_CUTOFF" ]; then
+        TIER_ARGS=$SHORT_ARGS
+    else
+        TIER_ARGS=$LONG_ARGS
+    fi
+
+    #
+    # The job runs this script again by absolute path, so $0 leads back
+    # to bin/. Keep the BAM's own basename; it names the output.
+    #
+    ABAM=$(cd "$(dirname "$BAM")" && pwd)/$(basename "$BAM")
+
+    JOBID=$(sbatch --parsable -A core001 $TIER_ARGS -N 1 -n 1 -c 2 --mem=32G \
+        -J DSB -o DSB_%j.out \
+        --wrap "$SDIR/downsampleBam.sh $DOWN $ABAM; RC=\$?; echo \"#DSB_EXIT=\$RC\"; exit \$RC")
+    RC=$?
+
+    if [ "$RC" != "0" ]; then
+        echo "FATAL ERROR: sbatch failed rc=[$RC]"
+        exit 1
+    fi
+
+    echo JOBID=$JOBID SM=$SM SIZE=$SIZE
+    echo SLURM=$TIER_ARGS
+    exit 0
+
 fi
 
 P=$(awk -v d=$DOWN 'BEGIN {printf "%.10g", 1/d}')
