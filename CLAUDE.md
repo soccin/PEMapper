@@ -304,9 +304,20 @@ Three configs are repointed and live as of 2026-09-02 (commits `169ec88`,
 | `human_b37` | `H.sapiens/b37/b37.fasta` |
 | `mouse_mm10` | `M.musculus/mm10/mm10.fasta` |
 | `human_hg38+mm39` | `hybrids/H.sapiens_M.musculus/hg38_mm39/hg38_mm39.fasta` |
+| `human_GRCh38` | `H.sapiens/GRCh38.d1.vd1/GRCh38.d1.vd1.fa` |
 
-There is no human-only hg38 config: `H.sapiens/hg38` has a FASTA and a
-`.dict` but no bwa index.
+`human_GRCh38` was added 2026-10-08. It is the GDC `GRCh38.d1.vd1` build
+(no-alt analysis set + hs38d1 decoys + viral contigs), the same reference
+the JUNO config `lib/genomes/IRIS/human_GRCh38` pointed at. The FASTA is
+the GDC download; the `.fai`, `.dict` and bwa 0.7.19 index were built
+locally. Its sorted `@SQ` `SN`/`LN` hash is
+`6a02a9445433ae0b01febe3b4f39d5ec`, which the ATAC-seq pipeline maps to
+`b38`. `H.sapiens/GRCh38.d1.vd1/README_GRCh38.md` records how it was
+built.
+
+`H.sapiens/hg38` (UCSC hg38 plus one `chrDecoy` contig) is a different
+contig set and still has no config: it has a FASTA and a `.dict` but no
+bwa index.
 
 Two archive directories sit alongside the live configs and **neither holds
 anything runnable**:
