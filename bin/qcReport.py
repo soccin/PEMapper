@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """HTML QC report from the picard metrics PEMapper writes.
 
-Run it through bin/qcReport.sh, which uses the plotly in bin/venv:
+Run it through bin/qcReport, which uses the plotly in bin/venv:
 
-    qcReport.sh [-o REPORT.html] [-t TITLE] DIR [DIR ...]
+    qcReport [-o REPORT.html] [-t TITLE] DIR [DIR ...]
 
 Each DIR is a PEMapper output directory such as out___M. It is searched
 at any depth for these files:
@@ -869,7 +869,7 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
         The parsed arguments.
     """
     parser = argparse.ArgumentParser(
-        prog="qcReport.sh",
+        prog="qcReport",
         description="HTML QC report from PEMapper picard metrics.",
     )
     parser.add_argument(

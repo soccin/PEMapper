@@ -107,8 +107,8 @@ working directory.
 One HTML report for every sample under one or more output directories:
 
 ```bash
-bin/qcReport.sh out___M                      # writes ./qcReport.html
-bin/qcReport.sh -o Proj_QC.html -t "Proj QC" out___M out___M__NoClip
+bin/qcReport out___M                      # writes ./qcReport.html
+bin/qcReport -o Proj_QC.html -t "Proj QC" out___M out___M__NoClip
 ```
 
 It reads `<S>___AS.txt`, `___MD.txt`, `___INS.txt` and `RUNSTATUS.txt`

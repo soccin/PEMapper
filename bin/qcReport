@@ -1,14 +1,14 @@
 #!/bin/bash
 
 #
-# qcReport.sh -- one HTML QC report from the picard metrics PEMapper
+# qcReport -- one HTML QC report from the picard metrics PEMapper
 # writes, for every sample under one or more output directories.
 #
 # usage:
-#   qcReport.sh [-o REPORT.html] [-t TITLE] DIR [DIR ...]
+#   qcReport [-o REPORT.html] [-t TITLE] DIR [DIR ...]
 #
-#   qcReport.sh out___M                    writes ./qcReport.html
-#   qcReport.sh -o Proj_QC.html out___M out___M__NoClip
+#   qcReport out___M                    writes ./qcReport.html
+#   qcReport -o Proj_QC.html out___M out___M__NoClip
 #
 # Each DIR is searched at any depth for <S>___AS.txt, <S>___MD.txt,
 # <S>___INS.txt and RUNSTATUS.txt. The report is a single file with
