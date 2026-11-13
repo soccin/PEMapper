@@ -102,6 +102,22 @@ go to `SLURM.PEMAP/<timestamp>_<pid>_<sample>/`, one directory per run.
 Intermediates go to `$PEMAP_SCRATCH_ROOT` on shared scratch, not to the
 working directory.
 
+## QC REPORT
+
+One HTML report for every sample under one or more output directories:
+
+```bash
+bin/qcReport.sh out___M                      # writes ./qcReport.html
+bin/qcReport.sh -o Proj_QC.html -t "Proj QC" out___M out___M__NoClip
+```
+
+It reads `<S>___AS.txt`, `___MD.txt`, `___INS.txt` and `RUNSTATUS.txt`
+at any depth, and writes a summary table, bar charts of reads, alignment,
+duplication and median insert size, and the insert size distributions
+overlaid. plotly.js is embedded, so the file (about 5 MB) opens offline.
+It needs plotly in `bin/venv`; `bin/mkVenv` installs it, and a venv
+built before that needs `bin/venv/bin/pip install plotly` once.
+
 ## GENOMES
 
 `lib/genomes/<name>` are shell fragments that set `GENOME_FASTA` and

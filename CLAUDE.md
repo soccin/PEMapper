@@ -76,6 +76,10 @@ point will run (both check for `bin/venv/bin/activate` and abort):
 
 `bin/jar/picard.jar` is committed to the repo (~18 MB); no download needed.
 
+`mkVenv` also installs plotly, which only `bin/qcReport.sh` uses. A venv
+built before that change lacks it; `bin/venv/bin/pip install plotly`
+adds it without a rebuild.
+
 ## Running
 
 Single sample (one or more FASTQ directories):
@@ -157,6 +161,32 @@ Do not remove one thinking another subsumes it:
 A failed `sbatch` exits all of `pipe.sh`, leaving the jobs already
 submitted to run on and the rest never queued; every one of them can
 succeed, so without that marker a truncated run reports OK.
+
+## QC report
+
+```bash
+bin/qcReport.sh [-o OUT.html] [-t TITLE] DIR [DIR ...]
+```
+
+A standalone tool, not called by `pipe.sh`. It searches each `DIR` at any
+depth for `<S>___AS.txt`, `<S>___MD.txt`, `<S>___INS.txt` and
+`RUNSTATUS.txt` and writes one self-contained HTML file (plotly inlined,
+about 5 MB, opens offline). Design points that are easy to break:
+
+- Samples are keyed by (directory, name), not name alone, so the same
+  sample mapped under two tags gives two rows. Labels fall back from
+  `SAMPLE` to `GENOME/SAMPLE` to a path relative to the common parent
+  only when names collide.
+- A sample with only `RUNSTATUS.txt` (failed before picard) still gets a
+  row with blank metrics; missing files print a WARNING, not an error.
+- Rows used: the `PAIR` row of AS, the single MD row (`LB` is the sample
+  name), and the INS orientation with the most `READ_PAIRS`.
+- The reads bar splits `TOTAL_READS` into unique aligned, duplicate and
+  unaligned. This relies on MarkDuplicates examining exactly the primary
+  aligned reads (`2*READ_PAIRS_EXAMINED + UNPAIRED_READS_EXAMINED ==
+  PF_READS_ALIGNED`).
+- `qcReport.sh` `exec`s the venv python, per "Exit status hygiene"; it
+  exits 1 on a bad directory or when no metrics are found.
 
 ## Architecture
 
@@ -496,8 +526,10 @@ BAM's `@PG` record.
 - Dead on IRIS, moved to `bin/attic/` and off `PATH`: `bsub.sh` (hardcodes
   the JUNO LSF binary), `lsf.sh`, `sge.sh`, `sgeWrap.sh`, `cutadapt.off`,
   and `runBwa.sh` (a no-op stub that echoes its own name and arguments).
-  The last two went over in a second sweep (`ca53e56`). Nothing in `bin/`
-  is unreachable from `pipe.sh` now.
+  The last two went over in a second sweep (`ca53e56`). Everything left in
+  `bin/` is reachable from `pipe.sh` except the standalone tools a user
+  runs by hand: `checkRun.sh`, `downsampleBam.sh` and `qcReport.sh` (with
+  its payload `qcReport.py`), plus `mkVenv` for setup.
 - `bin/picardV2` and `bin/picard.local` are now byte-identical apart from
   two blank lines, since `picardV2`'s `LSF` branch was removed. Collapsing
   them to one wrapper means editing four `pipe.sh` call sites; not done.
