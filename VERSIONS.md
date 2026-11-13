@@ -28,15 +28,18 @@ Measured on IRIS, 2026-09-08.
 | Java | OpenJDK 23.0.1 | `PATH` |
 | Python | 3.10.14 | `PATH`; there is no `python2` on IRIS |
 | cutadapt | **unpinned** | `pip install cutadapt` into `bin/venv` |
+| plotly | **unpinned** | `pip install plotly` into `bin/venv`; only for `bin/qcReport` |
 | R | 4.5.1 | `PATH`; only for picard's `___INSHist.pdf` |
 
-Two of these are not as fixed as the table looks:
+Three of these are not as fixed as the table looks:
 
 - **cutadapt** has no version constraint, so two setups a month apart can
   get different versions. To reproduce a run exactly, record
   `bin/venv/bin/cutadapt --version` with the results.
-- **`bin/bwa`** is a per-branch symlink. On `master`, `neo` and the
-  `flavor/*` branches it points at a CentOS 7 path that does not exist on
+- **plotly** has no version constraint either. It changes only how
+  `bin/qcReport` draws its charts, never a mapping result.
+- **`bin/bwa`** is a per-branch symlink. On `neo` and the `flavor/*`
+  branches it points at a CentOS 7 path that does not exist on
   IRIS, and bash skips a broken symlink during `PATH` lookup, so `bwa`
   resolves to whatever is next instead of failing. Only `pipe.sh` on the
   Slurm branches aborts on an empty `BWA_VERSION`.

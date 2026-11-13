@@ -15,6 +15,12 @@ Tool and reference versions are in `VERSIONS.md`. Open work is in
   `H.sapiens/GRCh38.d1.vd1`, with a bwa 0.7.19 index built locally.
   Same contigs as the archived JUNO config `lib/genomes/IRIS/human_GRCh38`,
   so GRCh38 runs on IRIS match runs made on JUNO.
+- **QC report `bin/qcReport`.** One self-contained HTML file for every
+  sample under one or more output directories: a summary table, bar
+  charts of reads, alignment, duplication and median insert size, and
+  the insert size distributions overlaid. Reads `___AS.txt`,
+  `___MD.txt`, `___INS.txt` and `RUNSTATUS.txt`, so a run that failed
+  before picard still gets a row. `bin/mkVenv` now installs plotly too.
 
 ## v_4.1.0 — 2026-09-08
 
