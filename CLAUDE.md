@@ -11,35 +11,39 @@ linter; "running" the pipeline is the only way to exercise it.
 
 ## Which branch is this? Check before anything else
 
-Branches get switched often in this repo, and this file is **tracked on
-the Slurm branches only** (added by `983974a` on `iris`). On those
-branches it is a normal versioned file; on any branch cut before that
-commit -- `master`, `neo`, `devs/slurm-sh`, the `flavor/*` branches -- it
-does not exist in the history at all, so a checkout **deletes it from the
-working tree**. Either way it does not necessarily describe the code
-sitting next to it. Never infer the state of the tree from this file.
-Two commands orient you:
+Branches get switched often in this repo. This file was added by
+`983974a` on `iris` and reached `master` with the `v_4.1.0` merge, so it
+is tracked on `iris`, `master` and branches cut from them. On any branch
+cut before that commit -- `devs/slurm-sh`, `neo`, `juno`, the `flavor/*`
+branches and the other cluster branches -- it does not exist in the
+history at all, so a checkout **deletes it from the working tree**.
+Either way it does not necessarily describe the code sitting next to it.
+Never infer the state of the tree from this file. Two commands orient
+you:
 
 ```bash
 git branch --show-current
-sed -n 11p pipe.sh
+grep -n '^source .*bin/' pipe.sh
 ```
 
-Line 11 of `pipe.sh` is the discriminator, and it beats the branch name
-because it is the code:
+The scheduler `source` line in `pipe.sh` is the discriminator, and it
+beats the branch name because it is the code. It is line 11 on recent
+branches and line 4 or 7 on older ones (`lilac`, `jurassic`, `triassic`,
+`flavor/wgs_qc`), so grep for it rather than printing a fixed line:
 
-| `pipe.sh:11` | Means |
+| `source` line | Means |
 |---|---|
-| `source $SDIR/bin/slurm.sh` | the IRIS / Slurm 25.11.5 line -- `iris`, `devs/slurm-sh`, topic branches cut from them. **This file describes that work.** |
-| `source $SDIR/bin/lsf.sh` | JUNO / LSF 10.1 -- `master`, `neo`, `lilac`, `jurassic`, `triassic` and every `flavor/*`. Most of this file does not apply. |
+| `source $SDIR/bin/slurm.sh` | the IRIS / Slurm 25.11.5 line -- `master`, `iris`, `devs/slurm-sh`, topic branches cut from them. **This file describes that work.** |
+| `source $SDIR/bin/lsf.sh` | JUNO / LSF 10.1 -- `neo`, `juno`, `lilac`, `jurassic`, `triassic` and every `flavor/*`. Most of this file does not apply. |
 
 `bin/slurm.sh` and `bin/checkRun.sh` exist only on the Slurm branches, so
 their absence says the same thing. The Slurm work was ported from `neo`;
 the LSF and SGE implementations are kept as reference but were moved to
 **`bin/attic/`** (commit `7704c7a`) and are **not** sourced. Note the
 discriminator above still reads `source $SDIR/bin/lsf.sh` for the LSF
-branches -- on those branches the file really is at `bin/lsf.sh`; only the
-Slurm branches have `bin/attic`.
+branches -- on those branches the file really is at `bin/lsf.sh`. Only
+`master`, `iris` and branches cut from them have `bin/attic`;
+`devs/slurm-sh` predates it.
 
 Where this file and the code disagree, the code is right and the prose is
 stale -- say so rather than working from the prose. See "Branch model"
@@ -76,7 +80,7 @@ point will run (both check for `bin/venv/bin/activate` and abort):
 
 `bin/jar/picard.jar` is committed to the repo (~18 MB); no download needed.
 
-`mkVenv` also installs plotly, which only `bin/qcReport.sh` uses. A venv
+`mkVenv` also installs plotly, which only `bin/qcReport` uses. A venv
 built before that change lacks it; `bin/venv/bin/pip install plotly`
 adds it without a rebuild.
 
@@ -165,7 +169,7 @@ succeed, so without that marker a truncated run reports OK.
 ## QC report
 
 ```bash
-bin/qcReport.sh [-o OUT.html] [-t TITLE] DIR [DIR ...]
+bin/qcReport [-o OUT.html] [-t TITLE] DIR [DIR ...]
 ```
 
 A standalone tool, not called by `pipe.sh`. It searches each `DIR` at any
@@ -185,7 +189,7 @@ about 5 MB, opens offline). Design points that are easy to break:
   unaligned. This relies on MarkDuplicates examining exactly the primary
   aligned reads (`2*READ_PAIRS_EXAMINED + UNPAIRED_READS_EXAMINED ==
   PF_READS_ALIGNED`).
-- `qcReport.sh` `exec`s the venv python, per "Exit status hygiene"; it
+- `qcReport` `exec`s the venv python, per "Exit status hygiene"; it
   exits 1 on a bad directory or when no metrics are found.
 
 ## Architecture
@@ -457,9 +461,9 @@ Switching is routine here and the tree takes it fine, but several things
 follow from it:
 
 - **`bin/bwa` is a committed symlink whose target is per-branch.** On the
-  Slurm branches it points at
-  `/usersoftware/core001/common/RHEL_8/bwa/v0.7.19/bin/bwa`; on `master`,
-  `neo` and the `flavor/*` branches it still points at
+  Slurm branches, `master` included, it points at
+  `/usersoftware/core001/common/RHEL_8/bwa/v0.7.19/bin/bwa`; on `neo` and
+  the `flavor/*` branches it still points at
   `/opt/common/CentOS_7/bwa/bwa-0.7.17/bwa`, which does not exist on IRIS.
   Bash skips a broken symlink during `PATH` lookup, so on those branches
   `bwa` silently resolves to whatever is next on `PATH` rather than
@@ -474,20 +478,22 @@ follow from it:
 - **Setup survives a switch.** `bin/venv` is ignored by `bin/.gitignore`
   on every branch and `bin/jar/picard.jar` is committed on every branch,
   so neither needs rebuilding after a checkout.
-- **`bin/attic/` exists only on the Slurm branches.** Checking out
-  `master`, `neo` or a `flavor/*` puts `bsub.sh`, `lsf.sh`, `sge.sh`,
+- **`bin/attic/` exists only on `master`, `iris` and branches cut from
+  them.** Checking out `neo` or a `flavor/*` puts `bsub.sh`, `lsf.sh`, `sge.sh`,
   `sgeWrap.sh`, `cutadapt.off` and `runBwa.sh` back at `bin/` -- where
   those branches need the first four, since
-  `pipe.sh:11` there sources `bin/lsf.sh`. A path under `bin/attic` is
+  `pipe.sh` there sources `bin/lsf.sh`. A path under `bin/attic` is
   therefore not a stable reference across a checkout.
 - **`ISSUES.md`, `CHANGELOG.md`, `VERSIONS.md` and `docs/*.md` are tracked
-  on the Slurm branches only**, like this file, so a checkout of `master`,
-  `neo` or a `flavor/*` removes them from the working tree.
+  only on `master`, `iris` and branches cut from them**, like this file,
+  so a checkout of `neo`, `devs/slurm-sh` or a `flavor/*` removes them
+  from the working tree.
   `IRIS_PUNCH_LIST.md`, if it is still around,
   is untracked and therefore survives every checkout -- it is superseded,
   but do not `git clean` it away without checking it has nothing left that
   the tracked documents do not.
-- **`CLAUDE.md` is tracked, but only on the Slurm branches.** Edits to it
+- **`CLAUDE.md` is tracked, but only on `master`, `iris` and branches cut
+  from them.** Edits to it
   show up as ` M`, not `??`, and belong in a commit like any other file.
   Checking out a branch that predates `983974a` removes it; `git stash`
   it first, or copy it aside, if you want it to survive the switch.
@@ -496,9 +502,10 @@ follow from it:
 branch is checked out when a run starts is what lands in the BAM `@PG`
 `VN:` field.
 
-Releases are tagged `v_<major>.<minor>.<patch>`. `master` is at `v_4.0.0`
-(JUNO/LSF); `v_4.1.0` is the IRIS/Slurm release, prepared on
-`rel/v_4.1.0` and merged back to `master`. `v_4.0.1-juno` sits on the
+Releases are tagged `v_<major>.<minor>.<patch>`. `v_4.0.0` is the last
+JUNO/LSF release; `v_4.1.0` is the IRIS/Slurm release, prepared on
+`rel/v_4.1.0` and merged back to `master`, which has carried the Slurm
+line since. `v_4.0.1-juno` sits on the
 `juno` branch and is not on this line of history.
 
 `pipe.sh` runs `git describe` against its own `$SDIR/.git`, so the checkout
@@ -528,8 +535,9 @@ BAM's `@PG` record.
   and `runBwa.sh` (a no-op stub that echoes its own name and arguments).
   The last two went over in a second sweep (`ca53e56`). Everything left in
   `bin/` is reachable from `pipe.sh` except the standalone tools a user
-  runs by hand: `checkRun.sh`, `downsampleBam.sh` and `qcReport.sh` (with
-  its payload `qcReport.py`), plus `mkVenv` for setup.
+  runs by hand, `downsampleBam.sh` and `qcReport` (with its payload
+  `qcReport.py`), and `mkVenv` for setup. `checkRun.sh` is both: the
+  `__08__STATUS` job runs it, and users run it by hand.
 - `bin/picardV2` and `bin/picard.local` are now byte-identical apart from
   two blank lines, since `picardV2`'s `LSF` branch was removed. Collapsing
   them to one wrapper means editing four `pipe.sh` call sites; not done.
