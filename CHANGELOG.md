@@ -21,6 +21,14 @@ Tool and reference versions are in `VERSIONS.md`. Open work is in
   the insert size distributions overlaid. Reads `___AS.txt`,
   `___MD.txt`, `___INS.txt` and `RUNSTATUS.txt`, so a run that failed
   before picard still gets a row. `bin/mkVenv` now installs plotly too.
+- **Delivery script `deliveryBams.sh`.** Copies each sample's
+  `___MD.bam`/`___MD.bai` to `r_NNN/bams/<genome>/<sample>/` and its
+  picard metrics (`___AS`, `___ASt`, `___MD`, `___INS` `.txt` and
+  `___INSHist.pdf`) to `r_NNN/metrics/<genome>/<sample>/` in the BIC
+  delivery area, as `svc_core001_bot01`. `-d` derives the destination
+  from the project path, `-n` is a dry run, `-i` picks the `out___*`
+  folder. Delivers nothing unless every sample's status is OK. Does not
+  register the run with the bicdelivery database.
 
 ## v_4.1.0 — 2026-09-08
 

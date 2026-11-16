@@ -118,6 +118,32 @@ overlaid. plotly.js is embedded, so the file (about 5 MB) opens offline.
 It needs plotly in `bin/venv`; `bin/mkVenv` installs it, and a venv
 built before that needs `bin/venv/bin/pip install plotly` once.
 
+## DELIVERY
+
+Copy the BAMs and picard metrics of a finished run to the BIC delivery
+area. Run from the folder that holds `out___*`:
+
+```bash
+./PEMapper/deliveryBams.sh -n -d          # dry run: print the commands
+./PEMapper/deliveryBams.sh -d             # deliver to the default folder
+./PEMapper/deliveryBams.sh -i out___M /path/to/delivery/Proj_<no>[/r_NNN]
+```
+
+`-d` delivers to `/data1/core002/res/bic/results/<pi>/<invest>/Proj_<no>`,
+taken from the `.../Users/<Pi>/<Invest>/Proj_<no>/` path of the current
+folder. `-i` picks the `out___*` folder and is needed only when there is
+more than one. Without an `r_NNN` the next free run folder is used. The
+layout is
+
+```
+r_NNN/bams/<genome>/<sample>/<S>___MD.{bam,bai}
+r_NNN/metrics/<genome>/<sample>/<S>___{AS,ASt,MD,INS}.txt, ___INSHist.pdf
+```
+
+Nothing is copied unless every sample's `RUNSTATUS.txt` says
+`PEMAP STATUS: OK` and all its files are present. The run is not
+registered with the bicdelivery database and no email is written.
+
 ## GENOMES
 
 `lib/genomes/<name>` are shell fragments that set `GENOME_FASTA` and
