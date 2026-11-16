@@ -192,6 +192,36 @@ about 5 MB, opens offline). Design points that are easy to break:
 - `qcReport` `exec`s the venv python, per "Exit status hygiene"; it
   exits 1 on a bad directory or when no metrics are found.
 
+## Delivery
+
+```bash
+./deliveryBams.sh [-n] [-i OUTDIR] /path/to/delivery/Proj_<no>[/r_NNN]
+./deliveryBams.sh [-n] [-i OUTDIR] -d|--default
+```
+
+A standalone tool at the repo top level, not called by `pipe.sh`. Run it
+from the folder holding `out___*` (usually the parent of this checkout).
+It is a cut-down port of `deliverResults.sh` in the `soccin/ATAC-seq`
+repo; the `-d` path derivation, the `r_NNN` numbering, the readability
+check on the deepest existing folder and the `asbot` dry-run wrapper are
+copied from there. Design points:
+
+- Layout is `r_NNN/bams/<genome>/<sample>/` and
+  `r_NNN/metrics/<genome>/<sample>/`. The genome level is in `metrics`
+  too, so a sample mapped to two genomes does not overwrite itself.
+- Only `___MD.bam`/`___MD.bai` and the five picard files are copied;
+  `RUNSTATUS.txt` is checked but not delivered.
+- All samples are checked before anything is copied. Any missing file or
+  a status other than `PEMAP STATUS: OK` aborts with every problem
+  listed. It does not run `bin/checkRun.sh` itself; `RUNSTATUS.txt` is
+  that script's output.
+- Every write runs as `svc_core001_bot01` via `dzdo`; source paths are
+  physical (`pwd -P`, `realpath`) so the service account does not have
+  to follow a symlink through a home directory.
+- Unlike the ATAC-seq script it writes no `project.yaml`, no email and
+  does **not** register the run with the bicdelivery permissions
+  database. Do not add that.
+
 ## Architecture
 
 ### QRUN: the scheduler abstraction
